@@ -1,397 +1,206 @@
-# MediTicket2 Frontend
+# MediTicketApp — Desktop Frontend
 
 ## Project Overview
 
-MediTicket2 is a healthcare management desktop application built using **Java Swing**, **FlatLaf**, **MigLayout**, and a shared REST API client.
+MediTicketApp is the desktop client for the MediTicket healthcare management system. Built with **Java Swing**, **FlatLaf**, and **MigLayout**, it provides role-specific dashboards for Patients, Doctors, Nurses, and Administrators.
 
-The frontend provides role-based interfaces for:
-
-* Patients
-* Doctors
-* Clinic Staff
-* Administrators
-* Appointments
-* Patient Tickets
-* Payments
-* Notifications
-* User Profiles
-* Authentication
-
-The desktop client communicates with the MediTicket2 Spring Boot backend through REST API endpoints.
+The app communicates with the [MediTicket2 Spring Boot backend](https://github.com/JoshBlack25/MediTicket2) over a local REST API.
 
 ---
 
 ## Technology Stack
 
-* Java 21
-* Java Swing
-* FlatLaf
-* MigLayout
-* Maven
-* Jackson
-* REST API
-* JWT Authentication
-* JUnit 5
-* Mockito
-* IntelliJ IDEA
-* GitHub
+| Technology | Version / Notes |
+|---|---|
+| Java | 22 |
+| Java Swing | Desktop UI framework |
+| FlatLaf | 3.7.1 — modern look and feel |
+| MigLayout | 11.3 — responsive layout manager |
+| Jackson | 2.18.9 — JSON serialization |
+| LGoodDatePicker | 11.2.1 — date input fields |
+| TwelveMonkeys ImageIO | 3.13.1 — quality image rendering |
+| modal-dialog | 2.6.1 — toast and modal feedback |
+| Maven | 3.9+ (system install required — no `mvnw`) |
+| maven-shade-plugin | 3.5.2 — produces executable fat JAR |
 
 ---
 
-## Frontend Architecture
+## Building and Running
 
-The frontend follows a component-based structure built around Swing panels and shared UI components.
+### Prerequisites
 
-The main areas of the application include:
+- Java 22 JDK
+- Maven 3.9+ installed on your system (`mvn` available in PATH)
+- The [MediTicket2 backend](https://github.com/JoshBlack25/MediTicket2) running locally on port 8080
 
-* **API Layer** — Handles communication with the backend REST API
-* **Model Layer** — Contains frontend representations of backend domain objects
-* **Session Layer** — Maintains the currently authenticated user's session
-* **UI Layer** — Contains dashboards, pages, dialogs, navigation and reusable components
-* **Theme Layer** — Provides shared styling, colours, fonts and UI configuration
+### Build the fat JAR
+
+```powershell
+cd MediTicketApp
+mvn package "-Dmaven.test.skip=true"
+```
+
+This produces: `target/cput-1.0-SNAPSHOT.jar`
+
+### Run the app
+
+```powershell
+java -jar target\cput-1.0-SNAPSHOT.jar
+```
+
+The login window will open. The backend **must be running first** or the app will show network errors.
+
+> For the full step-by-step launch guide covering both backend and frontend, see [`docs/LAUNCH.md`](../docs/LAUNCH.md).
 
 ---
 
-## Project Structure
+## Backend Connection
 
-```text
-src
-└── main
-    └── java
-        └── za.ac.cput
-            ├── api
-            │   ├── ApiClientProvider
-            │   ├── BaseApiClient
-            │   └── ...
-            │
-            ├── model
-            │   └── domain
-            │       ├── Appointment
-            │       ├── ClinicStaff
-            │       ├── Doctor
-            │       ├── Notification
-            │       ├── Patient
-            │       ├── PatientTicket
-            │       ├── Payment
-            │       └── ...
-            │
-            ├── session
-            │   └── SessionManager
-            │
-            └── ui
-                ├── clinicstaff
-                │   ├── admin
-                │   ├── components
-                │   └── nurse
-                │
-                ├── doctor
-                │   ├── pages
-                │   └── DoctorDashboard
-                │
-                ├── patient
-                │   ├── pages
-                │   └── PatientDashboard
-                │
-                ├── layout
-                │   ├── Sidebar
-                │   ├── TopHeader
-                │   └── NavItem
-                │
-                └── theme
-                    ├── AppTheme
-                    └── FontManager
+The app connects to:
+
+```
+http://localhost:8080/api
+```
+
+This is configured in `BaseApiClient.java`. The backend must be running on port 8080 before launching the app.
+
+---
+
+## Architecture
+
+```
+src/main/java/za/ac/cput/
+├── api/
+│   ├── BaseApiClient         HTTP client (GET/POST/PUT/PATCH/DELETE + JWT auth)
+│   ├── ApiClientProvider     Singleton — provides typed clients per domain entity
+│   └── clients/              One client class per backend entity
+│
+├── model/domain/             Frontend representations of backend domain objects
+│   ├── Appointment
+│   ├── ClinicStaff
+│   ├── Doctor
+│   ├── Notification
+│   ├── Patient
+│   ├── PatientTicket
+│   ├── Payment
+│   └── ...
+│
+├── session/
+│   └── SessionManager        Singleton — holds logged-in user state (token, role, name)
+│
+├── ui/
+│   ├── auth/                 Login and registration screens
+│   ├── patient/              Patient dashboard and pages
+│   ├── doctor/               Doctor dashboard and pages
+│   ├── clinicstaff/
+│   │   ├── admin/            Admin dashboard and pages
+│   │   └── nurse/            Nurse dashboard and pages
+│   ├── layout/               Shared Sidebar, TopHeader, NavItem
+│   └── theme/                AppTheme colours, FontManager
+│
+└── Main.java                 Entry point — initialises FlatLaf and opens the login window
 ```
 
 ---
 
-## Authentication
+## Authentication & Sessions
 
-The frontend integrates with the backend's JWT authentication system.
-
-The client supports:
-
-* User login
-* JWT access token storage
-* Automatic JWT attachment to API requests
-* Session management
-* Logout
-* Role-based dashboards
-* Authenticated API communication
-
-The `SessionManager` maintains information about the currently authenticated user, while `BaseApiClient` handles authenticated requests to the backend.
-
----
-
-## API Integration
-
-The frontend communicates with the backend through a shared API client architecture.
-
-### Base API Client
-
-`BaseApiClient` provides common functionality for REST communication, including:
-
-* GET requests
-* POST requests
-* PUT requests
-* PATCH requests
-* DELETE requests
-* JWT authentication headers
-* JSON serialization/deserialization
-* API error handling
-
-### API Client Provider
-
-`ApiClientProvider` provides access to the application's API clients.
-
-The backend URL can be configured using:
-
-```text
--Dapi.base.url=<backend-url>
-```
-
-If no URL is provided, the application uses the configured default backend URL.
+1. User logs in via `LoginPanel` — credentials sent to `POST /api/auth/login`
+2. Backend returns JWT access token + refresh token + user type
+3. `SessionManager` stores: `userId`, `userType`, `staffRole`, `accessToken`, `refreshToken`, `fullName`, `email`
+4. `BaseApiClient.setAuthToken()` attaches `Authorization: Bearer <token>` to all subsequent requests
+5. `LoginPanel` then fetches the user's full name based on their role (Patient / Doctor / Clinic Staff)
+6. Routing: `PATIENT` → `PatientDashboard`, `DOCTOR` → `DoctorDashboard`, `CLINIC_STAFF+ADMIN` → `AdminDashboard`, `CLINIC_STAFF+NURSE` → `NurseDashboard`
 
 ---
 
 ## Role-Based Dashboards
 
-The frontend provides separate dashboards for different user types.
-
 ### Patient Dashboard
-
-The patient interface provides navigation for:
-
-* Dashboard
-* Appointments
-* Tickets
-* Payments
-* Notifications
-* Profile
+- Appointments — book, view, cancel
+- Tickets — view consultation tickets
+- Payments — view payment history
+- Notifications — view and mark as read
+- Profile — view account details
 
 ### Doctor Dashboard
+- Appointments — view scheduled appointments
+- Tickets — view and complete consultations
+- Patients — view patient list
+- Notifications — view and mark as read
+- Profile — view account details
 
-The doctor interface provides navigation for:
+### Admin Dashboard (Clinic Staff — Admin role)
+- Appointments — manage all appointments
+- Tickets — create and manage patient tickets
+- Patients — view patient list
+- Staff — manage clinic staff
+- Notifications — view and mark as read
+- Profile — view account details
 
-* Dashboard
-* Appointments
-* Tickets
-* Patients
-* Notifications
-* Profile
-
-### Clinic Staff Dashboard
-
-Clinic staff functionality is separated according to staff responsibilities, including administrative and nursing interfaces.
-
-Administrative functionality includes areas such as:
-
-* Dashboard
-* Appointments
-* Tickets
-* Patients
-* Notifications
-* Staff management
-* Profile
+### Nurse Dashboard (Clinic Staff — Nurse role)
+- Appointments — view appointments
+- Tickets — view and manage assigned tickets
+- Notifications — view and mark as read
+- Profile — view account details
 
 ---
 
-## Notifications
+## Key Flows
 
-The frontend includes notification interfaces for the supported user roles.
+| Flow | Who | How |
+|---|---|---|
+| Book appointment | Patient | `BookAppointmentDialog` → `POST /api/appointments` |
+| Create ticket | Nurse/Admin | `CreateTicketDialog` → `POST /api/patient-tickets` |
+| Complete consultation | Doctor | `CompleteConsultationDialog` → `PATCH /api/patient-tickets/{id}/status` |
+| Generate payment | Nurse/Admin | `GeneratePaymentDialog` → `POST /api/payments` |
+| View notifications | All roles | Notification page → `GET /api/notifications/user/{id}` |
+| Mark notification read | All roles | Notification action → `PATCH /api/notifications/{id}/read` |
 
-Notification functionality includes:
-
-* Notification history
-* Notification status display
-* Notification type display
-* Notification details
-* Recipient information
-* Mark as Read functionality
-* Notification filtering
-* Follow-up notification functionality
-
-The notification interface communicates with the backend Notification API.
-
----
-
-## Patient Tickets
-
-The frontend provides ticket management interfaces for patients, doctors and clinic staff.
-
-Ticket functionality includes:
-
-* Viewing patient tickets
-* Viewing ticket status
-* Viewing ticket details
-* Ticket-related appointment information
-* Role-specific ticket management
-
----
-
-## Appointments
-
-Appointment pages provide users with access to appointment information appropriate to their role.
-
-Appointments are connected to patients, doctors and clinic staff through the backend API.
-
----
-
-## Payments
-
-The patient interface provides a dedicated Payments section for viewing and managing payment-related information provided by the backend.
-
----
-
-## User Interface
-
-The application uses shared UI components to maintain a consistent interface across dashboards.
-
-### Shared Components
-
-* Sidebar navigation
-* Top header
-* Dialog components
-* Notification dialogs
-* Reusable page components
-* Shared buttons and form controls
-
-### Theme
-
-The application uses:
-
-* `AppTheme` for shared colours, spacing and UI constants
-* `FontManager` for consistent typography
-* FlatLaf for the application's Swing look and feel
-* MigLayout where appropriate for component layout
-
----
-
-## Configuration
-
-The frontend can be configured to connect to different backend environments.
-
-The API base URL can be supplied as a Java system property:
-
-```bash
--Dapi.base.url=https://mediticket2-production.up.railway.app
-```
-
-This allows the same desktop client to communicate with either a local development backend or the deployed backend.
-
----
-
-## Testing
-
-The project uses:
-
-* JUnit 5
-* Mockito
-
-Tests are used to verify frontend/API-related functionality where applicable.
-
----
-
-## Development Workflow
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-```
-
-### 2. Open the Project
-
-Open the project in **IntelliJ IDEA**.
-
-### 3. Load Maven Dependencies
-
-Allow IntelliJ IDEA to load the Maven project and download the required dependencies.
-
-### 4. Configure the Backend URL
-
-Use the appropriate API base URL through:
-
-```text
--Dapi.base.url=<backend-url>
-```
-
-### 5. Run the Application
-
-Run the main application class from IntelliJ IDEA.
-
-### 6. Create a Branch
-
-Each team member works on their own branch.
-
-```bash
-git checkout -b <branch-name>
-```
-
-### 7. Commit Changes
-
-```bash
-git add .
-git commit -m "Completed frontend implementation"
-```
-
-### 8. Push Changes
-
-```bash
-git push origin <branch-name>
-```
-
-### 9. Create a Pull Request
-
-Submit a Pull Request from the development branch to the appropriate main project branch.
-
-### 10. Await Review
-
-The Team Lead reviews and merges approved Pull Requests.
+All API calls run on a `SwingWorker` thread to keep the UI responsive.
 
 ---
 
 ## Team Members
 
-| Team Member            | Student Number |
-| ---------------------- | -------------: |
-| Joshua Reid Adams      |      230317693 |
-| Abdullahi Raage Farah  |      230971091 |
-| Aidan Barends          |      230155639 |
-| Jaden Clayton Abrahams |      222206721 |
-| Joshua Peter Bonzet    |      221312536 |
-| Matthew Barron         |      230398863 |
-| Raul Jaaim Everts      |      230270564 |
+| Team Member            | Student Number | UI Area                          |
+|------------------------|----------------|----------------------------------|
+| Joshua Reid Adams      | 230317693      | PatientTicket UI, Auth (Team Lead) |
+| Abdullahi Raage Farah  | 230971091      | Payments UI, TicketStatus UI     |
+| Aidan Barends          | 230155639      | Patient UI, Registration         |
+| Jaden Clayton Abrahams | 222206721      | Doctor UI, Doctor Dashboard      |
+| Joshua Peter Bonzet    | 221312536      | Appointments UI                  |
+| Matthew Barron         | 230398863      | Clinic Staff UI, Admin Dashboard |
+| Raul Jaaim Everts      | 230270564      | Notifications UI                 |
 
 ---
 
-## Backend
+## Development Workflow
 
-The frontend connects to the MediTicket2 Spring Boot backend through its REST API.
+```bash
+# 1. Pull latest
+git checkout main && git pull origin main
 
-The backend provides:
+# 2. Switch to your branch
+git checkout <your-branch>
 
-* Authentication
-* User management
-* Appointments
-* Patient tickets
-* Payments
-* Notifications
-* Database persistence
-* Email services
-* JWT security
+# 3. Make changes
+
+# 4. Build and test locally
+mvn package "-Dmaven.test.skip=true"
+java -jar target\cput-1.0-SNAPSHOT.jar
+
+# 5. Commit and push
+git add .
+git commit -m "feat: describe your change"
+git push origin <your-branch>
+
+# 6. Open a Pull Request to main
+```
 
 ---
 
-## Deployment
+## Related
 
-The frontend is a Java Swing desktop application and is run locally through IntelliJ IDEA.
-
-The application can connect to the deployed MediTicket2 backend hosted on **Railway** using the configured API base URL.
-
----
-
-## Project Status
-
-The frontend is under active development alongside the MediTicket2 backend.
-
-Features are implemented progressively according to the team's assigned tasks and project requirements.
+- **Backend (REST API):** [MediTicket2](https://github.com/JoshBlack25/MediTicket2)
+- **Full launch guide:** [`docs/LAUNCH.md`](../docs/LAUNCH.md)

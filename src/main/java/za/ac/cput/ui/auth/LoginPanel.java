@@ -224,10 +224,13 @@ public class LoginPanel extends JPanel {
 
         if ("CLINIC_STAFF".equals(session.getUserType())) {
             var staff = ApiClientProvider.getInstance().clinicStaff().findByEmail(session.getEmail());
-            if (staff.isSuccess()) session.setFullName(staff.getData().getName().getFullName());
+            if (staff.isSuccess() && staff.getData() != null) session.setFullName(staff.getData().getName().getFullName());
         } else if ("PATIENT".equals(session.getUserType())) {
             var patient = ApiClientProvider.getInstance().patients().findByEmail(session.getEmail());
-            if (patient.isSuccess()) session.setFullName(patient.getData().getName().getFullName());
+            if (patient.isSuccess() && patient.getData() != null) session.setFullName(patient.getData().getName().getFullName());
+        } else if ("DOCTOR".equals(session.getUserType())) {
+            var doctor = ApiClientProvider.getInstance().doctors().findByEmail(session.getEmail());
+            if (doctor.isSuccess() && doctor.getData() != null) session.setFullName(doctor.getData().getName().getFullName());
         }
 
 

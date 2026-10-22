@@ -10,6 +10,8 @@ import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.doctor.DoctorDashboard;
 import za.ac.cput.ui.patient.components.StatusBadge;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.model.domain.Notification;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 import za.ac.cput.ui.theme.ImageManager;
 
@@ -46,7 +48,8 @@ public class DashboardPage extends JPanel implements Refreshable {
     private List<Appointment> myAppointments = new ArrayList<>();
     private List<Appointment> todaysAppointments = new ArrayList<>();
     private List<PatientTicket> myTickets = new ArrayList<>();
-    private int notificationCount = 0;
+    private int notificationCount = 0; // unread only
+    private List<Notification> doctorNotifications = new ArrayList<>();
 
     private boolean loading = false;
 
@@ -96,7 +99,9 @@ public class DashboardPage extends JPanel implements Refreshable {
                         .collect(Collectors.toList());
 
                 var notifResult = api.notifications().findByDoctor(doctorId);
-                notificationCount = notifResult.isSuccess() ? notifResult.getData().size() : 0;
+                doctorNotifications = notifResult.isSuccess() && notifResult.getData() != null
+                        ? notifResult.getData() : new ArrayList<>();
+                notificationCount = (int) doctorNotifications.stream().filter(Notification::isUnread).count();
 
                 LocalDate today = LocalDate.now();
                 todaysAppointments = myAppointments.stream()
@@ -166,7 +171,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         todaysAppointmentsCard = new SummaryCard("Today's Appointments", "\u2014", AppTheme.PRIMARY);
         openTicketsCard = new SummaryCard("Open Tickets", "\u2014", AppTheme.STATUS_INFO);
         totalPatientsCard = new SummaryCard("My Patients", "\u2014", AppTheme.ACCENT_DARK);
-        notificationsCard = new SummaryCard("Notifications", "\u2014", AppTheme.STATUS_DANGER);
+        notificationsCard = new SummaryCard("Unread Notifications", "\u2014", AppTheme.PRIMARY);
         JComponent[] summaryCards = { todaysAppointmentsCard, openTicketsCard, totalPatientsCard, notificationsCard };
         for (int col = 0; col < 4; col++) {
             GridBagConstraints c = bentoConstraints(col, 0, 1, 1, gap);
@@ -228,7 +233,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         eyebrow.setForeground(AppTheme.PRIMARY);
         eyebrow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        greetingLabel = new JLabel("Good Morning \uD83D\uDC4B");
+        greetingLabel = new JLabel("Good Morning");
         greetingLabel.setFont(FontManager.headlineFont(Font.BOLD, 30));
         greetingLabel.setForeground(AppTheme.TEXT_PRIMARY);
         greetingLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -250,19 +255,18 @@ public class DashboardPage extends JPanel implements Refreshable {
         row.setOpaque(false);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton appts = outlineButton("Appointments");
-        appts.addActionListener(e -> owner.navigateTo("APPOINTMENTS"));
-
-        JButton tickets = outlineButton("Tickets");
-        tickets.addActionListener(e -> owner.navigateTo("TICKETS"));
-
-        JButton patients = outlineButton("Patients");
-        patients.addActionListener(e -> owner.navigateTo("PATIENTS"));
-
-        row.add(appts);
-        row.add(tickets);
-        row.add(patients);
+        // Same quick-action style on every role's home page: first action filled, rest outlined.
+        row.add(quickAction("My tickets", Icons.TICKET, true, "TICKETS"));
+        row.add(quickAction("Appointments", Icons.CALENDAR, false, "APPOINTMENTS"));
+        row.add(quickAction("Patients", Icons.USERS, false, "PATIENTS"));
         return row;
+    }
+
+    private JButton quickAction(String label, String icon, boolean primary, String pageKey) {
+        JButton button = new JButton(label);
+        AppTheme.styleActionButton(button, primary, icon);
+        button.addActionListener(e -> owner.navigateTo(pageKey));
+        return button;
     }
 
     private JButton outlineButton(String text) {
@@ -470,7 +474,7 @@ public class DashboardPage extends JPanel implements Refreshable {
     private void applyData() {
         String name = SessionManager.getInstance().getFullName();
         String lastName = extractLastName(name);
-        greetingLabel.setText("Good " + timeOfDayGreeting() + (lastName.isEmpty() ? "" : ", Dr. " + lastName) + " \uD83D\uDC4B");
+        greetingLabel.setText("Good " + timeOfDayGreeting() + (lastName.isEmpty() ? "" : ", Dr. " + lastName));
 
         int todayCount = todaysAppointments.size();
         subtitleLabel.setText(todayCount > 0
@@ -600,25 +604,49 @@ public class DashboardPage extends JPanel implements Refreshable {
         return row;
     }
 
+    // Latest notifications, same as the nurse dashboard (this used to show only a count).
     private void rebuildActivity() {
-        // Doctor notifications aren't fetched as full objects in this dashboard
-        // (only a count), so show a simple placeholder list sized to the count.
         activityList.removeAll();
 
-        boolean empty = notificationCount == 0;
-        activityEmptyLabel.setVisible(empty);
-        if (empty) {
-            activityList.add(activityEmptyLabel);
-        } else {
-            JLabel summary = new JLabel(notificationCount + " unread notification" + (notificationCount == 1 ? "" : "s") + ".");
-            summary.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-            summary.setForeground(AppTheme.TEXT_PRIMARY);
-            summary.setAlignmentX(Component.LEFT_ALIGNMENT);
-            activityList.add(summary);
+        List<Notification> sorted = new ArrayList<>(doctorNotifications);
+        sorted.sort(Comparator.comparing(Notification::getNotificationDate,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+
+        int shown = 0;
+        for (Notification n : sorted) {
+            if (shown >= 3) break;
+            activityList.add(buildActivityItem(n));
+            activityList.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+            shown++;
         }
+
+        activityEmptyLabel.setVisible(shown == 0);
+        if (shown == 0) activityList.add(activityEmptyLabel);
 
         activityList.revalidate();
         activityList.repaint();
+    }
+
+    private JComponent buildActivityItem(Notification n) {
+        JPanel item = new JPanel();
+        item.setOpaque(false);
+        item.setLayout(new BoxLayout(item, BoxLayout.Y_AXIS));
+        item.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        String text = n.getNotificationMessage() != null ? n.getNotificationMessage() : "Notification";
+        JLabel message = new JLabel("<html>" + text.replace("&", "&amp;").replace("<", "&lt;") + "</html>");
+        message.setFont(FontManager.bodyFont(n.isUnread() ? Font.BOLD : Font.PLAIN, 12));
+        message.setForeground(AppTheme.TEXT_PRIMARY);
+        message.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel when = new JLabel(za.ac.cput.ui.layout.NotificationCard.timeAgo(n.getNotificationDate()));
+        when.setFont(FontManager.bodyFont(Font.PLAIN, 11));
+        when.setForeground(AppTheme.TEXT_MUTED);
+        when.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        item.add(message);
+        item.add(when);
+        return item;
     }
 
     private void rebuildProgress() {
@@ -645,15 +673,11 @@ public class DashboardPage extends JPanel implements Refreshable {
         return wrap;
     }
 
+    // Plain teal text link (was a boxed button with a rectangle drawn around the text).
     private JButton smallActionButton(String text, Color color) {
         JButton btn = new JButton(text);
-        btn.setFont(FontManager.bodyFont(Font.BOLD, 14));
+        AppTheme.styleLinkButton(btn);
         btn.setForeground(color);
-        btn.setBackground(AppTheme.SURFACE);
-        btn.setBorder(BorderFactory.createLineBorder(color, 1, true));
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setMargin(new Insets(8, 16, 8, 16));
         return btn;
     }
 

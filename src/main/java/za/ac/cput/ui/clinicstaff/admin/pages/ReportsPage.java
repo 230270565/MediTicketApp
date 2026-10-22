@@ -7,6 +7,7 @@ import za.ac.cput.model.domain.*;
 import za.ac.cput.ui.clinicstaff.components.ActivityRow;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -76,14 +77,17 @@ public class ReportsPage extends JPanel implements Refreshable {
         textStack.add(title);
         textStack.add(subtitle);
 
-        JButton refresh = new JButton("\u21BB Refresh");
-        refresh.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        JButton refresh = new JButton("Refresh");
+        AppTheme.styleActionButton(refresh, false, Icons.REFRESH);
         refresh.setFocusPainted(false);
         refresh.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         refresh.addActionListener(e -> loadData());
 
         panel.add(textStack, BorderLayout.WEST);
-        panel.add(refresh, BorderLayout.EAST);
+        JPanel refreshWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        refreshWrap.setOpaque(false);
+        refreshWrap.add(refresh);
+        panel.add(refreshWrap, BorderLayout.EAST);
         return panel;
     }
 

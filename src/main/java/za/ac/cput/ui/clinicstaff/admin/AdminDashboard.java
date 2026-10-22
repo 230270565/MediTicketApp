@@ -83,7 +83,7 @@ public class AdminDashboard extends JPanel {
     }
 
     private void registerPages() {
-        pageContainer.add(new DashboardPage(), PAGE_HOME);
+        pageContainer.add(new DashboardPage(this::navigateTo), PAGE_HOME);
         pageContainer.add(new AppointmentsPage(), PAGE_APPOINTMENTS);
         pageContainer.add(new StaffPage(), PAGE_STAFF);
         pageContainer.add(new PatientsPage(), PAGE_PATIENTS);
@@ -108,6 +108,12 @@ public class AdminDashboard extends JPanel {
     private void showPage(String key) {
         pageLayout.show(pageContainer, key);
         if (live != null) live.pageOpened();
+    }
+
+    /** Lets the home page's quick actions open another page. */
+    public void navigateTo(String pageKey) {
+        sidebar.select(pageKey);
+        showPage(pageKey);
     }
 
     private void onLogout() {

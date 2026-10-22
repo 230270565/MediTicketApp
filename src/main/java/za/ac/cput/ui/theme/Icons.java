@@ -68,6 +68,21 @@ public final class Icons {
         };
     }
 
+    /**
+     * Splits a leading emoji off a label ("\uD83D\uDCB3 2 payments" -> {CARD, "2 payments"}),
+     * so text that used to start with an emoji can show a vector icon instead.
+     * Returns {null, text} when there is no leading emoji.
+     */
+    public static String[] splitLeadingEmoji(String text) {
+        if (text == null || text.length() < 2 || !Character.isHighSurrogate(text.charAt(0))) {
+            return new String[]{null, text};
+        }
+        String emoji = text.substring(0, 2);
+        String rest = text.substring(2).stripLeading();
+        String name = nameForEmoji(emoji);
+        return new String[]{INFO.equals(name) ? null : name, rest};
+    }
+
     // ── Painters: each draws on a 24x24 grid with the stroke already set ──
 
     private static final Map<String, Consumer<Graphics2D>> PAINTERS = Map.ofEntries(

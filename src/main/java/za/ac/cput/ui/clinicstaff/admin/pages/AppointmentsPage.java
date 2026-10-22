@@ -12,6 +12,7 @@ import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -254,7 +255,13 @@ public class AppointmentsPage extends JPanel implements Refreshable {
         textStack.setLayout(new BoxLayout(textStack, BoxLayout.Y_AXIS));
         textStack.setOpaque(false);
 
-        JLabel titleLabel = new JLabel(title);
+        // Banner titles used to start with an emoji (rendered as a box); show it as a vector icon.
+        String[] iconAndText = Icons.splitLeadingEmoji(title);
+        JLabel titleLabel = new JLabel(iconAndText[1]);
+        if (iconAndText[0] != null) {
+            titleLabel.setIcon(Icons.get(iconAndText[0], 16, AppTheme.PRIMARY));
+            titleLabel.setIconTextGap(8);
+        }
         titleLabel.setFont(FontManager.bodyFont(Font.BOLD, 13));
         titleLabel.setForeground(AppTheme.TEXT_PRIMARY);
 

@@ -1,5 +1,7 @@
 package za.ac.cput.ui.patient.pages;
 //JOSHUA REID ADAMS - 230317693
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.PatientTicket;
@@ -8,6 +10,7 @@ import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.patient.components.TicketDetailsDialog;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -17,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class TicketsPage extends JPanel {
+public class TicketsPage extends JPanel implements Refreshable {
 
     private SummaryCard openCard, inProgressCard, resolvedCard, closedCard;
     private DefaultTableModel tableModel;
@@ -59,6 +62,12 @@ public class TicketsPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
     private JComponent buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
@@ -83,14 +92,17 @@ public class TicketsPage extends JPanel {
         textStack.add(title);
         textStack.add(subtitle);
 
-        JButton refreshButton = new JButton("\u27F3 Refresh");
-        refreshButton.setFont(FontManager.bodyFont(Font.BOLD, 12));
+        JButton refreshButton = new JButton("Refresh");
+        AppTheme.styleActionButton(refreshButton, false, Icons.REFRESH);
         refreshButton.setFocusPainted(false);
         refreshButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         refreshButton.addActionListener(e -> loadData());
 
         header.add(textStack, BorderLayout.WEST);
-        header.add(refreshButton, BorderLayout.EAST);
+        JPanel refreshButtonWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        refreshButtonWrap.setOpaque(false);
+        refreshButtonWrap.add(refreshButton);
+        header.add(refreshButtonWrap, BorderLayout.EAST);
         return header;
     }
 
@@ -123,12 +135,9 @@ public class TicketsPage extends JPanel {
 
         for (String[] f : filters) {
             JButton btn = new JButton(f[1]);
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 12));
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
                 renderTable();
@@ -149,6 +158,7 @@ public class TicketsPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         ticketsTable = new JTable(tableModel);
+        StatusPill.install(ticketsTable);
         ticketsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         ticketsTable.setRowHeight(40);
         ticketsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));

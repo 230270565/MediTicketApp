@@ -1,5 +1,7 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.auth.EmployeeAccessRequest;
@@ -15,7 +17,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.List;
 
-public class EmployeeOnboardingPage extends JPanel {
+public class EmployeeOnboardingPage extends JPanel implements Refreshable {
 
     private static final int ID_COLUMN = 4; // kept in the model for row lookups, hidden from view
 
@@ -43,6 +45,12 @@ public class EmployeeOnboardingPage extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
+        loadPendingRequests();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadPendingRequests();
     }
 
@@ -150,7 +158,23 @@ public class EmployeeOnboardingPage extends JPanel {
             @Override
             public boolean isCellEditable(int row, int col) { return false; }
         };
-        requestsTable = new JTable(tableModel);
+        // Empty state: say what belongs here instead of showing a blank table.
+        requestsTable = new JTable(tableModel) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getRowCount() == 0) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+                    g2.setColor(AppTheme.TEXT_MUTED);
+                    g2.drawString("No pending requests. Employees who request access will appear here.", 16, 32);
+                    g2.dispose();
+                }
+            }
+        };
+        requestsTable.setFillsViewportHeight(true);
+        StatusPill.install(requestsTable);
         requestsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         requestsTable.setRowHeight(40);
         requestsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));

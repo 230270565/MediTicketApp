@@ -1,5 +1,7 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 //JOSHUA REID ADAMS - 230317693
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Payment;
@@ -8,6 +10,7 @@ import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.clinicstaff.components.TicketDetailsDialog;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -19,7 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
-public class TicketsPage extends JPanel {
+public class TicketsPage extends JPanel implements Refreshable {
 
     private SummaryCard openCard, inProgressCard, resolvedCard, closedCard;
     private JPanel needsAttentionSection;
@@ -66,6 +69,12 @@ public class TicketsPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
     private JComponent buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
@@ -90,14 +99,17 @@ public class TicketsPage extends JPanel {
         textStack.add(title);
         textStack.add(subtitle);
 
-        JButton refreshButton = new JButton("\u27F3 Refresh");
-        refreshButton.setFont(FontManager.bodyFont(Font.BOLD, 12));
+        JButton refreshButton = new JButton("Refresh");
+        AppTheme.styleActionButton(refreshButton, false, Icons.REFRESH);
         refreshButton.setFocusPainted(false);
         refreshButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         refreshButton.addActionListener(e -> loadData());
 
         header.add(textStack, BorderLayout.WEST);
-        header.add(refreshButton, BorderLayout.EAST);
+        JPanel refreshButtonWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        refreshButtonWrap.setOpaque(false);
+        refreshButtonWrap.add(refreshButton);
+        header.add(refreshButtonWrap, BorderLayout.EAST);
         return header;
     }
 
@@ -138,12 +150,9 @@ public class TicketsPage extends JPanel {
 
         for (String[] f : filters) {
             JButton btn = new JButton(f[1]);
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 12));
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
                 renderTable();
@@ -164,6 +173,7 @@ public class TicketsPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         ticketsTable = new JTable(tableModel);
+        StatusPill.install(ticketsTable);
         ticketsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         ticketsTable.setRowHeight(40);
         ticketsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));
@@ -228,7 +238,13 @@ public class TicketsPage extends JPanel {
     private void updateNeedsAttention() {
         needsAttentionSection.removeAll();
 
-        long readyForPayment = countByStatus("RESOLVED");
+        // Resolved tickets that still have no payment request (a generated, unpaid payment
+        // is the patient's turn, not the nurse's).
+        long readyForPayment = allTickets.stream()
+                .filter(t -> "RESOLVED".equals(t.getCurrentStatus()))
+                .filter(t -> t.getAppointment() == null
+                        || !paymentsByAppointmentId.containsKey(t.getAppointment().getAppointmentId()))
+                .count();
         long escalated = countByStatus("ESCALATED");
 
         if (readyForPayment == 0 && escalated == 0) {
@@ -274,7 +290,13 @@ public class TicketsPage extends JPanel {
         textStack.setLayout(new BoxLayout(textStack, BoxLayout.Y_AXIS));
         textStack.setOpaque(false);
 
-        JLabel titleLabel = new JLabel(title);
+        // Banner titles used to start with an emoji (rendered as a box); show it as a vector icon.
+        String[] iconAndText = Icons.splitLeadingEmoji(title);
+        JLabel titleLabel = new JLabel(iconAndText[1]);
+        if (iconAndText[0] != null) {
+            titleLabel.setIcon(Icons.get(iconAndText[0], 16, AppTheme.PRIMARY));
+            titleLabel.setIconTextGap(8);
+        }
         titleLabel.setFont(FontManager.bodyFont(Font.BOLD, 13));
         titleLabel.setForeground(AppTheme.TEXT_PRIMARY);
 

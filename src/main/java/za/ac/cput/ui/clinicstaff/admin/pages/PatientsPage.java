@@ -1,5 +1,7 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 //AIDAN BARENDS - 230155639
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Patient;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class PatientsPage extends JPanel {
+public class PatientsPage extends JPanel implements Refreshable {
 
     private SummaryCard totalCard, activeCard, newThisMonthCard;
     private DefaultTableModel tableModel;
@@ -75,6 +77,12 @@ public class PatientsPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
     private JComponent buildHeader() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -123,12 +131,9 @@ public class PatientsPage extends JPanel {
 
         for (String[] f : filters) {
             JButton btn = new JButton(f[1]);
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 12));
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
                 renderTable();
@@ -162,7 +167,9 @@ public class PatientsPage extends JPanel {
         clearInactiveButton.setFont(FontManager.bodyFont(Font.BOLD, 12));
         clearInactiveButton.setForeground(AppTheme.STATUS_DANGER);
         clearInactiveButton.setBackground(AppTheme.SURFACE);
-        clearInactiveButton.setBorder(BorderFactory.createLineBorder(AppTheme.STATUS_DANGER, 1, true));
+        // Danger outline with proper padding; the click still asks for confirmation first.
+        clearInactiveButton.putClientProperty("FlatLaf.style",
+                "arc: 10; borderWidth: 1; focusWidth: 0; innerFocusWidth: 0; margin: 6,14,6,14; borderColor: #D64545; hoverBackground: #FAE6E6;");
         clearInactiveButton.setFocusPainted(false);
         clearInactiveButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         clearInactiveButton.addActionListener(e -> onClearInactive());
@@ -181,6 +188,7 @@ public class PatientsPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         patientsTable = new JTable(tableModel);
+        StatusPill.install(patientsTable);
         patientsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         patientsTable.setRowHeight(44);
         patientsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));

@@ -1,11 +1,13 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.*;
 import za.ac.cput.ui.clinicstaff.components.ActivityRow;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -15,7 +17,7 @@ import java.math.RoundingMode;
 import java.util.List;
 
 
-public class ReportsPage extends JPanel {
+public class ReportsPage extends JPanel implements Refreshable {
 
     private SummaryCard revenueCard, appointmentsCard, closedTicketsCard, avgFeeCard;
     private JPanel appointmentBreakdown, ticketBreakdown, paymentBreakdown, staffSnapshot;
@@ -45,6 +47,12 @@ public class ReportsPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
     private JComponent buildHeader() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
@@ -69,14 +77,17 @@ public class ReportsPage extends JPanel {
         textStack.add(title);
         textStack.add(subtitle);
 
-        JButton refresh = new JButton("\u21BB Refresh");
-        refresh.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        JButton refresh = new JButton("Refresh");
+        AppTheme.styleActionButton(refresh, false, Icons.REFRESH);
         refresh.setFocusPainted(false);
         refresh.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         refresh.addActionListener(e -> loadData());
 
         panel.add(textStack, BorderLayout.WEST);
-        panel.add(refresh, BorderLayout.EAST);
+        JPanel refreshWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        refreshWrap.setOpaque(false);
+        refreshWrap.add(refresh);
+        panel.add(refreshWrap, BorderLayout.EAST);
         return panel;
     }
 

@@ -24,9 +24,7 @@ public class RequestSubmittedPanel extends JPanel {
         ));
         card.setPreferredSize(new Dimension(480, 380));
 
-        JLabel icon = new JLabel("\u2709"); // envelope glyph
-        icon.setFont(FontManager.bodyFont(Font.PLAIN, 40));
-        icon.setForeground(AppTheme.PRIMARY);
+        JLabel icon = new JLabel(za.ac.cput.ui.theme.Icons.get(za.ac.cput.ui.theme.Icons.MAIL, 44, AppTheme.PRIMARY));
         icon.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel eyebrow = new JLabel("REQUEST SUBMITTED");

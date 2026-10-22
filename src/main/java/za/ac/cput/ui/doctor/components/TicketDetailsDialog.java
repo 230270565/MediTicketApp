@@ -1,5 +1,7 @@
 package za.ac.cput.ui.doctor.components;
 
+import za.ac.cput.ui.layout.StatusTimeline;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.PatientTicket;
@@ -24,7 +26,7 @@ public class TicketDetailsDialog {
         dialog.setSize(460, 520);
         dialog.setLocationRelativeTo(parent);
 
-        JPanel content = new JPanel();
+        JPanel content = new StatusTimeline.WidthTrackingPanel(); // wraps instead of scrolling sideways
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(AppTheme.SURFACE);
         content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
@@ -36,14 +38,14 @@ public class TicketDetailsDialog {
                         (ticket.getAppointment().getAppointmentTime() != null ? ticket.getAppointment().getAppointmentTime() : "")
                         : "—"));
 
-        JLabel statusValue = new JLabel(statusBadgeText(ticket.getCurrentStatus()));
-        statusValue.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        statusValue.setForeground(AppTheme.statusColor(ticket.getCurrentStatus()));
+        JPanel statusValue = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
+        statusValue.setOpaque(false);
+        statusValue.add(new StatusPill(ticket.getCurrentStatus()));
         content.add(labeledRow("Ticket Status", statusValue));
 
         content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
         content.add(sectionTitle("Status History"));
-        content.add(buildHistoryList(ticket));
+        content.add(StatusTimeline.build(ticket.getStatusHistory()));
 
         content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
 
@@ -84,6 +86,7 @@ public class TicketDetailsDialog {
         }
 
         JScrollPane scroll = new JScrollPane(content);
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(null);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
 
@@ -117,49 +120,6 @@ public class TicketDetailsDialog {
         return status != null ? status.replace("_", " ") : "—";
     }
 
-    private static JComponent buildHistoryList(PatientTicket ticket) {
-        JPanel list = new JPanel();
-        list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
-        list.setOpaque(false);
-        list.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        if (ticket.getStatusHistory() == null || ticket.getStatusHistory().isEmpty()) {
-            JLabel none = new JLabel("No history recorded.");
-            none.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-            none.setForeground(AppTheme.TEXT_MUTED);
-            list.add(none);
-            return list;
-        }
-
-        for (TicketStatus status : ticket.getStatusHistory()) {
-            JPanel row = new JPanel(new BorderLayout());
-            row.setOpaque(false);
-            row.setAlignmentX(Component.LEFT_ALIGNMENT);
-            row.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
-
-            JLabel statusLabel = new JLabel(statusBadgeText(status.getStatusType()));
-            statusLabel.setFont(FontManager.bodyFont(Font.BOLD, 12));
-            statusLabel.setForeground(AppTheme.statusColor(status.getStatusType()));
-
-            JLabel dateLabel = new JLabel(status.getStatusDate() != null ? status.getStatusDate().format(DATE_FMT) : "");
-            dateLabel.setFont(FontManager.bodyFont(Font.PLAIN, 11));
-            dateLabel.setForeground(AppTheme.TEXT_MUTED);
-
-            row.add(statusLabel, BorderLayout.WEST);
-            row.add(dateLabel, BorderLayout.EAST);
-            list.add(row);
-
-            if (status.getNotes() != null && !status.getNotes().isBlank()) {
-                JLabel notes = new JLabel("<html><i>" + status.getNotes() + "</i></html>");
-                notes.setFont(FontManager.bodyFont(Font.PLAIN, 11));
-                notes.setForeground(AppTheme.TEXT_SECONDARY);
-                notes.setAlignmentX(Component.LEFT_ALIGNMENT);
-                notes.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
-                list.add(notes);
-            }
-        }
-        return list;
-    }
 
     private static JComponent fieldBlock(String label, String value) {
         JLabel valueLabel = new JLabel(value);

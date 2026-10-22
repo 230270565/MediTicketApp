@@ -161,7 +161,8 @@ public class AppTheme {
             case "PENDING" -> STATUS_WARNING;
             case "REJECTED", "FAILED", "CANCELLED", "ESCALATED", "SUSPENDED", "INACTIVE" -> STATUS_DANGER;
             case "IN_PROGRESS", "RESCHEDULED" -> STATUS_INFO;
-            default -> STATUS_NEUTRAL; // CLOSED, REFUNDED, OPEN, etc.
+            case "OPEN" -> PRIMARY;
+            default -> STATUS_NEUTRAL; // CLOSED, REFUNDED, etc.
         };
     }
 
@@ -172,8 +173,75 @@ public class AppTheme {
             case "PENDING" -> STATUS_WARNING_BG;
             case "REJECTED", "FAILED", "CANCELLED", "ESCALATED", "SUSPENDED", "INACTIVE" -> STATUS_DANGER_BG;
             case "IN_PROGRESS", "RESCHEDULED" -> STATUS_INFO_BG;
+            case "OPEN" -> PRIMARY_LIGHT;
             default -> STATUS_NEUTRAL_BG;
         };
+    }
+
+    /**
+     * Readable label for an enum value shown to users:
+     * IN_PROGRESS -> "In progress", MEDICAL_AID -> "Medical aid", EFT stays "EFT".
+     */
+    public static String label(String value) {
+        if (value == null || value.isBlank()) return "\u2014";
+        if (value.equals("EFT") || value.equals("SMS")) return value;
+        String spaced = value.replace('_', ' ').toLowerCase();
+        return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
+    }
+
+    // ── Shared control styles ──────────────────────────────────
+    // One place for the look of filter pills and text links, so every page matches.
+
+    /** Filter pill: teal fill when selected, quiet outline otherwise. */
+    public static void styleFilterButton(AbstractButton btn, boolean selected) {
+        btn.setFont(FontManager.bodyFont(selected ? Font.BOLD : Font.PLAIN, 12));
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.putClientProperty("JButton.buttonType", "roundRect");
+        btn.setBackground(selected ? PRIMARY : SURFACE);
+        btn.setForeground(selected ? TEXT_ON_PRIMARY : TEXT_SECONDARY);
+        btn.putClientProperty("FlatLaf.style",
+                "arc: 999; borderWidth: 1; focusWidth: 0; innerFocusWidth: 0; margin: 5,14,5,14;"
+                        + " borderColor: " + toHex(selected ? PRIMARY : BORDER) + ";"
+                        + " hoverBackground: " + toHex(selected ? PRIMARY_DARK : SURFACE_ALT) + ";");
+    }
+
+    /** Text link button: teal text, no box, underline on hover. Replaces boxed link buttons. */
+    public static void styleLinkButton(AbstractButton btn) {
+        btn.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        btn.setForeground(PRIMARY);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setFocusPainted(false);
+        btn.setOpaque(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        String text = btn.getText();
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setText("<html><u>" + text + "</u></html>");
+            }
+            @Override public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setText(text);
+            }
+        });
+    }
+
+    /** Primary (filled teal) or secondary (teal outline) action button with an optional icon. */
+    public static void styleActionButton(AbstractButton btn, boolean primary, String iconName) {
+        btn.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBackground(primary ? PRIMARY : SURFACE);
+        btn.setForeground(primary ? TEXT_ON_PRIMARY : PRIMARY);
+        btn.putClientProperty("FlatLaf.style",
+                "arc: " + RADIUS_MD + "; borderWidth: 1; focusWidth: 0; innerFocusWidth: 0; margin: 9,16,9,16;"
+                        + " borderColor: " + toHex(PRIMARY) + ";"
+                        + " hoverBackground: " + toHex(primary ? PRIMARY_DARK : PRIMARY_LIGHT) + ";");
+        if (iconName != null) {
+            btn.setIcon(Icons.get(iconName, 16, primary ? TEXT_ON_PRIMARY : PRIMARY));
+            btn.setIconTextGap(8);
+        }
     }
 
     private static String toHex(Color c) {

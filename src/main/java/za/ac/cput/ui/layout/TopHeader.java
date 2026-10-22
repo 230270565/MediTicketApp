@@ -2,6 +2,7 @@ package za.ac.cput.ui.layout;
 
 import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.AvatarManager;
 import za.ac.cput.ui.theme.FontManager;
 
@@ -109,47 +110,68 @@ public class TopHeader extends JPanel {
     private JComponent buildRightSection() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, AppTheme.SPACE_MD, 0));
         panel.setOpaque(false);
-
+        // The "Search medical records" box was removed: it had no behaviour behind it.
         panel.add(buildNotificationBell());
-        panel.add(buildSearchField());
         return panel;
+    }
+
+    private Runnable onBellClick;
+
+    /** What clicking the bell does — each dashboard opens its Notifications page. */
+    public void setOnBellClick(Runnable onBellClick) {
+        this.onBellClick = onBellClick;
     }
 
     private JComponent buildNotificationBell() {
         JPanel wrapper = new JPanel(null);
         wrapper.setOpaque(false);
-        wrapper.setPreferredSize(new Dimension(36, 36));
+        wrapper.setPreferredSize(new Dimension(40, 40));
+        wrapper.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        wrapper.setToolTipText("Notifications");
 
-        JLabel bell = new JLabel("\uD83D\uDD14");
-        bell.setFont(FontManager.bodyFont(Font.PLAIN, 20));
-        bell.setBounds(0, 0, 36, 36);
+        JLabel bell = new JLabel(Icons.get(Icons.BELL, 22, AppTheme.TEXT_SECONDARY));
+        bell.setBounds(0, 4, 36, 36);
         bell.setHorizontalAlignment(SwingConstants.CENTER);
-        bell.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        notificationBadge = new JLabel();
-        notificationBadge.setOpaque(true);
-        notificationBadge.setBackground(AppTheme.STATUS_DANGER);
-        notificationBadge.setBounds(24, 2, 10, 10);
+        // Red count bubble on the bell's top-right corner.
+        notificationBadge = new JLabel("", SwingConstants.CENTER) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(AppTheme.STATUS_DANGER);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        notificationBadge.setFont(FontManager.bodyFont(Font.BOLD, 10));
+        notificationBadge.setForeground(Color.WHITE);
+        notificationBadge.setBounds(20, 0, 20, 16);
         notificationBadge.setVisible(false);
 
         wrapper.add(notificationBadge);
         wrapper.add(bell);
+        wrapper.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (onBellClick != null) onBellClick.run();
+            }
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                bell.setIcon(Icons.get(Icons.BELL, 22, AppTheme.PRIMARY));
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                bell.setIcon(Icons.get(Icons.BELL, 22, AppTheme.TEXT_SECONDARY));
+            }
+        });
         return wrapper;
     }
 
+    /** Unread notification count on the bell; 0 hides the bubble. */
     public void setUnreadCount(int count) {
+        notificationBadge.setText(count > 9 ? "9+" : String.valueOf(count));
         notificationBadge.setVisible(count > 0);
-    }
-
-    private JComponent buildSearchField() {
-        JTextField search = new JTextField();
-        search.putClientProperty("JTextField.placeholderText", "Search medical records...");
-        search.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        search.setPreferredSize(new Dimension(260, 36));
-        search.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(AppTheme.BORDER, 1, true),
-                BorderFactory.createEmptyBorder(4, 12, 4, 12)
-        ));
-        return search;
     }
 }

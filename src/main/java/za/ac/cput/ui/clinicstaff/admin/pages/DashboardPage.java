@@ -1,5 +1,6 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.auth.EmployeeAccessRequest;
@@ -10,6 +11,7 @@ import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.clinicstaff.components.ActivityRow;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -18,7 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-public class DashboardPage extends JPanel {
+public class DashboardPage extends JPanel implements Refreshable {
 
     private SummaryCard staffCard;
     private SummaryCard invitesCard;
@@ -28,8 +30,17 @@ public class DashboardPage extends JPanel {
     private JPanel clinicActivitySection;
     private JPanel staffOverviewSection;
     private JPanel onboardingOverviewSection;
+    private JPanel recentActivitySection;
+
+    // Opens another admin page (quick actions); set by AdminDashboard.
+    private final java.util.function.Consumer<String> navigate;
 
     public DashboardPage() {
+        this(null);
+    }
+
+    public DashboardPage(java.util.function.Consumer<String> navigate) {
+        this.navigate = navigate;
         setLayout(new BorderLayout());
         setBackground(AppTheme.BACKGROUND);
 
@@ -52,6 +63,12 @@ public class DashboardPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
     private JComponent buildGreeting() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -61,7 +78,7 @@ public class DashboardPage extends JPanel {
         SessionManager session = SessionManager.getInstance();
         String firstName = extractFirstName(session.getFullName());
 
-        JLabel greeting = new JLabel(greetingForTime() + ", " + firstName + " \uD83D\uDC4B");
+        JLabel greeting = new JLabel(greetingForTime() + ", " + firstName);
         greeting.setFont(FontManager.headlineFont(Font.BOLD, 26));
         greeting.setForeground(AppTheme.TEXT_PRIMARY);
         greeting.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -70,11 +87,29 @@ public class DashboardPage extends JPanel {
         subtitle.setFont(FontManager.bodyFont(Font.PLAIN, 14));
         subtitle.setForeground(AppTheme.TEXT_SECONDARY);
         subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        subtitle.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_XS, 0, 0, 0));
+        subtitle.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_XS, 0, AppTheme.SPACE_MD, 0));
+
+        // Same quick-action style on every role's home page: first action filled, rest outlined.
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, AppTheme.SPACE_SM, 0));
+        actions.setOpaque(false);
+        actions.setAlignmentX(Component.LEFT_ALIGNMENT);
+        actions.add(quickAction("Invite staff", Icons.CLIPBOARD, true, "ONBOARDING"));
+        actions.add(quickAction("Appointments", Icons.CALENDAR, false, "APPOINTMENTS"));
+        actions.add(quickAction("Reports", Icons.CHART, false, "REPORTS"));
 
         panel.add(greeting);
         panel.add(subtitle);
+        panel.add(actions);
         return panel;
+    }
+
+    private JButton quickAction(String label, String icon, boolean primary, String pageKey) {
+        JButton button = new JButton(label);
+        AppTheme.styleActionButton(button, primary, icon);
+        button.addActionListener(e -> {
+            if (navigate != null) navigate.accept(pageKey);
+        });
+        return button;
     }
 
     private String greetingForTime() {
@@ -98,7 +133,7 @@ public class DashboardPage extends JPanel {
         staffCard = new SummaryCard("Staff", "—", AppTheme.PRIMARY);
         invitesCard = new SummaryCard("Invites", "—", AppTheme.STATUS_WARNING);
         appointmentsCard = new SummaryCard("Appointments", "—", AppTheme.STATUS_INFO);
-        notificationsCard = new SummaryCard("Notifications", "—", AppTheme.STATUS_DANGER);
+        notificationsCard = new SummaryCard("Unread Notifications", "—", AppTheme.PRIMARY);
 
         grid.add(staffCard);
         grid.add(invitesCard);
@@ -127,7 +162,7 @@ public class DashboardPage extends JPanel {
         rightColumn.setOpaque(false);
 
         onboardingOverviewSection = buildCardSection("Pending Invitations");
-        JPanel recentActivitySection = buildCardSection("Recent Activity");
+        recentActivitySection = buildCardSection("Recent Activity");
         rightColumn.add(onboardingOverviewSection);
         rightColumn.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
         rightColumn.add(recentActivitySection);
@@ -138,7 +173,12 @@ public class DashboardPage extends JPanel {
     }
 
     private JPanel buildCardSection(String title) {
-        JPanel card = new JPanel();
+        // Full column width, natural height: the Recent Activity card used to shrink to its text.
+        JPanel card = new JPanel() {
+            @Override public Dimension getMaximumSize() {
+                return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+            }
+        };
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(AppTheme.SURFACE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -212,11 +252,51 @@ public class DashboardPage extends JPanel {
 
     }
 
+    // Loads this admin's notifications once: the unread count for the card,
+    // the latest three for Recent Activity (it used to stay on "Loading..." for ever).
     private String loadNotificationCount() {
         int userId = SessionManager.getInstance().getUserId();
         BaseApiClient.ApiResult<List<za.ac.cput.model.domain.Notification>> result =
                 ApiClientProvider.getInstance().notifications().findByClinicStaff(userId);
-        return result.isSuccess() ? String.valueOf(result.getData().size()) : "0";
+        List<za.ac.cput.model.domain.Notification> list =
+                result.isSuccess() && result.getData() != null ? result.getData() : List.of();
+        renderRecentActivity(list);
+        return String.valueOf(list.stream().filter(za.ac.cput.model.domain.Notification::isUnread).count());
+    }
+
+    private void renderRecentActivity(List<za.ac.cput.model.domain.Notification> notifications) {
+        List<JComponent> rows = new java.util.ArrayList<>();
+        notifications.stream()
+                .sorted(java.util.Comparator.comparing(za.ac.cput.model.domain.Notification::getNotificationDate,
+                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
+                .limit(3)
+                .forEach(n -> rows.add(activityItem(n)));
+        if (rows.isEmpty()) {
+            JLabel empty = new JLabel("No recent activity yet.");
+            empty.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+            empty.setForeground(AppTheme.TEXT_MUTED);
+            rows.add(empty);
+        }
+        replaceSectionBody(recentActivitySection, rows);
+    }
+
+    private JComponent activityItem(za.ac.cput.model.domain.Notification n) {
+        JPanel item = new JPanel();
+        item.setOpaque(false);
+        item.setLayout(new BoxLayout(item, BoxLayout.Y_AXIS));
+        item.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
+        String text = n.getNotificationMessage() != null ? n.getNotificationMessage() : "Notification";
+        JLabel message = new JLabel("<html>" + text.replace("&", "&amp;").replace("<", "&lt;") + "</html>");
+        message.setFont(FontManager.bodyFont(n.isUnread() ? Font.BOLD : Font.PLAIN, 12));
+        message.setForeground(AppTheme.TEXT_PRIMARY);
+        message.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel when = new JLabel(za.ac.cput.ui.layout.NotificationCard.timeAgo(n.getNotificationDate()));
+        when.setFont(FontManager.bodyFont(Font.PLAIN, 11));
+        when.setForeground(AppTheme.TEXT_MUTED);
+        when.setAlignmentX(Component.LEFT_ALIGNMENT);
+        item.add(message);
+        item.add(when);
+        return item;
     }
 
     private void renderClinicActivity(List<Appointment> appointments) {

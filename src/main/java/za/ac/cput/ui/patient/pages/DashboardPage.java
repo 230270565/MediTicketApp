@@ -1,5 +1,6 @@
 package za.ac.cput.ui.patient.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -8,6 +9,7 @@ import za.ac.cput.ui.patient.components.ElevatedCard;
 import za.ac.cput.ui.patient.components.StatusBadge;
 import za.ac.cput.ui.patient.components.SummaryCard;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -18,7 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-public class DashboardPage extends JPanel {
+public class DashboardPage extends JPanel implements Refreshable {
 
     private SummaryCard pendingAppointmentsCard;
     private SummaryCard activeTicketsCard;
@@ -31,7 +33,15 @@ public class DashboardPage extends JPanel {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mm a");
 
+    // Opens another page of the patient dashboard (quick actions); set by PatientDashboard.
+    private final java.util.function.Consumer<String> navigate;
+
     public DashboardPage() {
+        this(null);
+    }
+
+    public DashboardPage(java.util.function.Consumer<String> navigate) {
+        this.navigate = navigate;
         setLayout(new BorderLayout());
         setBackground(AppTheme.BACKGROUND);
 
@@ -54,6 +64,12 @@ public class DashboardPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
 
 
     private JComponent buildGreeting() {
@@ -66,10 +82,8 @@ public class DashboardPage extends JPanel {
         String firstName = extractFirstName(session.getFullName());
 
 
-        JLabel greeting = new JLabel(
-                "<html>" + greetingForTime() + ", " + firstName
-                        + " <span style='font-family:" + Font.SANS_SERIF + ";'>\uD83D\uDC4B</span></html>"
-        );
+        // No wave emoji: Swing can't draw colour emoji, so it wrapped onto its own line as a box.
+        JLabel greeting = new JLabel(greetingForTime() + ", " + firstName);
         greeting.setFont(FontManager.headlineFont(Font.BOLD, 26));
         greeting.setForeground(AppTheme.TEXT_PRIMARY);
         greeting.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -90,41 +104,20 @@ public class DashboardPage extends JPanel {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, AppTheme.SPACE_SM, 0));
         row.setOpaque(false);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-        row.add(quickActionButton("\uD83D\uDCC5", "Appointment", AppTheme.PRIMARY, AppTheme.TEXT_ON_PRIMARY));
-        row.add(quickActionButton("\uD83C\uDFAB", "Tickets", AppTheme.SURFACE, AppTheme.TEXT_PRIMARY));
-        row.add(quickActionButton("\uD83D\uDCB3", "Payments", AppTheme.ACCENT_DARK, AppTheme.TEXT_ON_PRIMARY));
+        // Same quick-action style on every role's home page: first action filled, rest outlined.
+        row.add(quickAction("Book appointment", Icons.CALENDAR, true, "APPOINTMENTS"));
+        row.add(quickAction("My tickets", Icons.TICKET, false, "TICKETS"));
+        row.add(quickAction("Payments", Icons.CARD, false, "PAYMENTS"));
         return row;
     }
 
-    private JButton quickActionButton(String emoji, String label, Color background, Color foreground) {
-
-        String html = "<html><span style='font-family:" + Font.SANS_SERIF + ";'>" + emoji + "</span> " + label + "</html>";
-
-        JButton button = new JButton(html) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getBackground());
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), AppTheme.RADIUS_MD, AppTheme.RADIUS_MD);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        button.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        button.setForeground(foreground);
-        button.setBackground(background);
-        button.setFocusPainted(false);
-        button.setBorderPainted(background == AppTheme.SURFACE); // outline only the white one
-        button.setBorder(BorderFactory.createCompoundBorder(
-                background == AppTheme.SURFACE ? BorderFactory.createLineBorder(AppTheme.BORDER, 1, true) : null,
-                BorderFactory.createEmptyBorder(10, 18, 10, 18)
-        ));
-        button.setContentAreaFilled(false);
-        button.setOpaque(false);
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    private JButton quickAction(String label, String icon, boolean primary, String pageKey) {
+        JButton button = new JButton(label);
+        AppTheme.styleActionButton(button, primary, icon);
+        button.addActionListener(e -> {
+            if (navigate != null) navigate.accept(pageKey);
+        });
         return button;
     }
 
@@ -151,7 +144,7 @@ public class DashboardPage extends JPanel {
         pendingAppointmentsCard = new SummaryCard("Pending Appointments", "\u2014", AppTheme.PRIMARY);
         activeTicketsCard = new SummaryCard("Active Tickets", "\u2014", AppTheme.STATUS_INFO);
         outstandingPaymentsCard = new SummaryCard("Outstanding Payments", "\u2014", AppTheme.ACCENT_DARK);
-        notificationsCard = new SummaryCard("Notifications", "\u2014", AppTheme.STATUS_DANGER);
+        notificationsCard = new SummaryCard("Unread Notifications", "\u2014", AppTheme.PRIMARY);
 
         grid.add(pendingAppointmentsCard);
         grid.add(activeTicketsCard);
@@ -335,8 +328,7 @@ public class DashboardPage extends JPanel {
         nextAppointmentBody.removeAll();
 
         if (appointment == null) {
-            JLabel emptyIcon = new JLabel("\uD83D\uDCC5");
-            emptyIcon.setFont(FontManager.bodyFont(Font.PLAIN, 28));
+            JLabel emptyIcon = new JLabel(Icons.get(Icons.CALENDAR, 28, Color.WHITE));
             emptyIcon.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             JLabel empty = new JLabel("No upcoming appointments");
@@ -392,9 +384,9 @@ public class DashboardPage extends JPanel {
         dateTimeRow.setOpaque(false);
         dateTimeRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         dateTimeRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
-        dateTimeRow.add(dateTimeChip("\uD83D\uDCC5", "DATE", appointment.getAppointmentDate() != null
+        dateTimeRow.add(dateTimeChip(Icons.CALENDAR, "DATE", appointment.getAppointmentDate() != null
                 ? appointment.getAppointmentDate().format(DATE_FMT) : "\u2014"));
-        dateTimeRow.add(dateTimeChip("\uD83D\uDD52", "TIME", appointment.getAppointmentTime() != null
+        dateTimeRow.add(dateTimeChip(Icons.CLOCK, "TIME", appointment.getAppointmentTime() != null
                 ? appointment.getAppointmentTime().format(TIME_FMT) : "\u2014"));
 
         nextAppointmentBody.add(tagRow);
@@ -422,7 +414,9 @@ public class DashboardPage extends JPanel {
         chip.setLayout(new BoxLayout(chip, BoxLayout.Y_AXIS));
         chip.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, AppTheme.SPACE_SM, AppTheme.SPACE_SM, AppTheme.SPACE_SM));
 
-        JLabel labelComp = new JLabel(emoji + "  " + label);
+        JLabel labelComp = new JLabel(label);
+        labelComp.setIcon(Icons.get(Icons.nameForEmoji(emoji), 12, AppTheme.PRIMARY_LIGHT));
+        labelComp.setIconTextGap(6);
         labelComp.setFont(FontManager.bodyFont(Font.BOLD, 10));
         labelComp.setForeground(AppTheme.PRIMARY_LIGHT);
         labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -460,7 +454,9 @@ public class DashboardPage extends JPanel {
 
         int notificationCount = 0;
         var notifResult = ApiClientProvider.getInstance().notifications().findByPatient(patientId);
-        if (notifResult.isSuccess()) notificationCount = notifResult.getData().size();
+        if (notifResult.isSuccess()) {
+            notificationCount = (int) notifResult.getData().stream().filter(n -> n.isUnread()).count();
+        }
 
 
         int outstandingPaymentCount = 0;
@@ -485,7 +481,8 @@ public class DashboardPage extends JPanel {
 
         Optional<Appointment> nextAppointment = appointments.stream()
                 .filter(a -> a.getAppointmentDate() != null && !a.getAppointmentDate().isBefore(LocalDate.now()))
-                .filter(a -> !"CANCELLED".equals(a.getConfirmationStatus()) && !"REJECTED".equals(a.getConfirmationStatus()))
+                .filter(a -> !"CANCELLED".equals(a.getConfirmationStatus()) && !"REJECTED".equals(a.getConfirmationStatus())
+                        && !"COMPLETED".equals(a.getConfirmationStatus()))
                 .min(Comparator.comparing(Appointment::getAppointmentDate));
 
         renderTimeline(nextAppointment.orElse(null));

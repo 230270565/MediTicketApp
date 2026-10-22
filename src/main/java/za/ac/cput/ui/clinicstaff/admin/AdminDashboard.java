@@ -7,7 +7,9 @@ import za.ac.cput.ui.clinicstaff.admin.pages.*;
 import za.ac.cput.ui.layout.NavItem;
 import za.ac.cput.ui.layout.Sidebar;
 import za.ac.cput.ui.layout.TopHeader;
+import za.ac.cput.ui.layout.LiveUpdater;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -22,6 +24,7 @@ public class AdminDashboard extends JPanel {
 
     private Sidebar sidebar;
     private TopHeader topHeader;
+    private LiveUpdater live; // real-time refresh of the visible page + unread badges
 
     private static final String PAGE_HOME = "HOME";
     private static final String PAGE_APPOINTMENTS = "APPOINTMENTS";
@@ -40,16 +43,16 @@ public class AdminDashboard extends JPanel {
         setBackground(AppTheme.BACKGROUND);
 
         List<NavItem> navItems = List.of(
-                new NavItem(PAGE_HOME, "\uD83C\uDFE0", "Home"),
-                new NavItem(PAGE_APPOINTMENTS, "\uD83D\uDCC5", "Appointments"),
-                new NavItem(PAGE_STAFF, "\uD83D\uDC65", "Staff"),
-                new NavItem(PAGE_PATIENTS, "\uD83D\uDECC", "Patients"),
-                new NavItem(PAGE_ONBOARDING, "\uD83D\uDCCB", "Onboarding"),
-                new NavItem(PAGE_TICKETS, "\uD83C\uDFAB", "Tickets"),
-                new NavItem(PAGE_REPORTS, "\uD83D\uDCCA", "Reports"),
-                new NavItem(PAGE_NOTIFICATIONS, "\uD83D\uDD14", "Notifications"),
-                new NavItem(PAGE_PAYMENTS, "\uD83D\uDCB3", "Payments"),
-                new NavItem(PAGE_PROFILE, "\uD83D\uDC64", "Profile")
+                new NavItem(PAGE_HOME, Icons.HOME, "Home"),
+                new NavItem(PAGE_APPOINTMENTS, Icons.CALENDAR, "Appointments"),
+                new NavItem(PAGE_STAFF, Icons.USERS, "Staff"),
+                new NavItem(PAGE_PATIENTS, Icons.USERS, "Patients"),
+                new NavItem(PAGE_ONBOARDING, Icons.CLIPBOARD, "Onboarding"),
+                new NavItem(PAGE_TICKETS, Icons.TICKET, "Tickets"),
+                new NavItem(PAGE_REPORTS, Icons.CHART, "Reports"),
+                new NavItem(PAGE_NOTIFICATIONS, Icons.BELL, "Notifications"),
+                new NavItem(PAGE_PAYMENTS, Icons.CARD, "Payments"),
+                new NavItem(PAGE_PROFILE, Icons.USER, "Profile")
         );
 
         sidebar = new Sidebar(navItems, PAGE_HOME, this::showPage, this::onLogout);
@@ -62,6 +65,12 @@ public class AdminDashboard extends JPanel {
 
         registerPages();
 
+        live = new LiveUpdater(pageContainer, sidebar, topHeader, PAGE_NOTIFICATIONS);
+        topHeader.setOnBellClick(() -> {
+            sidebar.select(PAGE_NOTIFICATIONS);
+            showPage(PAGE_NOTIFICATIONS);
+        });
+
         JPanel rightSide = new JPanel(new BorderLayout());
         rightSide.setBackground(AppTheme.BACKGROUND);
         rightSide.add(topHeader, BorderLayout.NORTH);
@@ -71,10 +80,11 @@ public class AdminDashboard extends JPanel {
         add(rightSide, BorderLayout.CENTER);
 
         showPage(PAGE_HOME);
+        live.start();
     }
 
     private void registerPages() {
-        pageContainer.add(new DashboardPage(), PAGE_HOME);
+        pageContainer.add(new DashboardPage(this::navigateTo), PAGE_HOME);
         pageContainer.add(new AppointmentsPage(), PAGE_APPOINTMENTS);
         pageContainer.add(new StaffPage(), PAGE_STAFF);
         pageContainer.add(new PatientsPage(), PAGE_PATIENTS);
@@ -98,9 +108,17 @@ public class AdminDashboard extends JPanel {
 
     private void showPage(String key) {
         pageLayout.show(pageContainer, key);
+        if (live != null) live.pageOpened();
+    }
+
+    /** Lets the home page's quick actions open another page. */
+    public void navigateTo(String pageKey) {
+        sidebar.select(pageKey);
+        showPage(pageKey);
     }
 
     private void onLogout() {
+        live.stop();
         ApiClientProvider.getInstance().getBaseApiClient().clearAuthToken();
         SessionManager.getInstance().clear();
         appFrame.showScreen(AppFrame.SCREEN_LOGIN);

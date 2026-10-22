@@ -1,5 +1,7 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 //ABDULLAHI RAAGE FARAH - 230971091
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -8,6 +10,7 @@ import za.ac.cput.ui.clinicstaff.components.PaymentDetailsDialog;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -19,7 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class PaymentsPage extends JPanel {
+public class PaymentsPage extends JPanel implements Refreshable {
 
     private SummaryCard pendingCard, paidCard, refundedCard, failedCard;
     private JPanel needsAttentionSection;
@@ -62,6 +65,12 @@ public class PaymentsPage extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
+        loadData();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadData();
     }
 
@@ -124,12 +133,9 @@ public class PaymentsPage extends JPanel {
 
         for (String[] f : filters) {
             JButton btn = new JButton(f[1]);
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 12));
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
                 renderTable();
@@ -150,6 +156,7 @@ public class PaymentsPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         paymentsTable = new JTable(tableModel);
+        StatusPill.install(paymentsTable);
         paymentsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         paymentsTable.setRowHeight(40);
         paymentsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));
@@ -243,7 +250,13 @@ public class PaymentsPage extends JPanel {
         textStack.setLayout(new BoxLayout(textStack, BoxLayout.Y_AXIS));
         textStack.setOpaque(false);
 
-        JLabel titleLabel = new JLabel(title);
+        // Banner titles used to start with an emoji (rendered as a box); show it as a vector icon.
+        String[] iconAndText = Icons.splitLeadingEmoji(title);
+        JLabel titleLabel = new JLabel(iconAndText[1]);
+        if (iconAndText[0] != null) {
+            titleLabel.setIcon(Icons.get(iconAndText[0], 16, AppTheme.PRIMARY));
+            titleLabel.setIconTextGap(8);
+        }
         titleLabel.setFont(FontManager.bodyFont(Font.BOLD, 13));
         titleLabel.setForeground(AppTheme.TEXT_PRIMARY);
 

@@ -1,6 +1,7 @@
 package za.ac.cput.ui.layout;
 
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 import za.ac.cput.ui.theme.ImageManager;
 
@@ -108,25 +109,56 @@ public class Sidebar extends JPanel {
     }
 
     private JPanel buildRow(String icon, String label) {
-        JPanel row = new JPanel(new BorderLayout(AppTheme.SPACE_SM, 0));
+        JPanel row = new JPanel(new BorderLayout(AppTheme.SPACE_SM + 2, 0));
         row.setOpaque(true);
         row.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
         row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
 
-        JLabel iconLabel = new JLabel(icon);
-// Icons are emoji glyphs — Inter (our custom embedded font) has no emoji
-// coverage and doesn't get OS font-fallback the way Java's built-in
-// logical fonts do. Use a plain system font here so emoji render
-// correctly instead of as empty boxes.
-        iconLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
+        // Vector icon instead of an emoji glyph: Swing on Windows drew emoji as
+        // black boxes. Icons.nameForEmoji keeps the existing NavItem lists working.
+        String iconName = Icons.nameForEmoji(icon);
+        JLabel iconLabel = new JLabel(Icons.get(iconName, 18, AppTheme.TEXT_SECONDARY));
+        iconLabel.putClientProperty("iconName", iconName);
 
         JLabel textLabel = new JLabel(label);
-        labelsByKey.put(label, textLabel); // keyed loosely; style pass below uses rowsByKey instead
+        textLabel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        labelsByKey.put(label, textLabel);
+
+        // Unread-count badge, hidden until setBadge() gives it a count.
+        JLabel badge = new JLabel();
+        badge.setFont(FontManager.bodyFont(Font.BOLD, 11));
+        badge.setForeground(AppTheme.TEXT_ON_PRIMARY);
+        badge.setOpaque(false);
+        badge.setVisible(false);
+        badge.setBorder(BorderFactory.createEmptyBorder(1, 7, 1, 7));
+        badge.setUI(new javax.swing.plaf.basic.BasicLabelUI() {
+            @Override
+            public void paint(Graphics g, JComponent c) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(AppTheme.PRIMARY);
+                g2.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), c.getHeight(), c.getHeight());
+                g2.dispose();
+                super.paint(g, c);
+            }
+        });
 
         row.add(iconLabel, BorderLayout.WEST);
         row.add(textLabel, BorderLayout.CENTER);
+        row.add(badge, BorderLayout.EAST);
         return row;
+    }
+
+    /** Shows a teal count badge on a nav row (e.g. unread notifications); 0 hides it. */
+    public void setBadge(String key, int count) {
+        JPanel row = rowsByKey.get(key);
+        if (row == null) return;
+        JLabel badge = (JLabel) row.getComponent(2);
+        badge.setText(count > 99 ? "99+" : String.valueOf(count));
+        badge.setVisible(count > 0);
+        row.revalidate();
+        row.repaint();
     }
 
     public void select(String key) {
@@ -139,6 +171,9 @@ public class Sidebar extends JPanel {
             boolean selected = entry.getKey().equals(selectedKey);
             JPanel row = entry.getValue();
             row.setBackground(selected ? AppTheme.PRIMARY_LIGHT : AppTheme.SURFACE);
+            JLabel iconLabel = (JLabel) row.getComponent(0);
+            iconLabel.setIcon(Icons.get((String) iconLabel.getClientProperty("iconName"), 18,
+                    selected ? AppTheme.PRIMARY : AppTheme.TEXT_SECONDARY));
             JLabel textLabel = (JLabel) row.getComponent(1);
             textLabel.setFont(FontManager.bodyFont(selected ? Font.BOLD : Font.PLAIN, 13));
             textLabel.setForeground(selected ? AppTheme.PRIMARY : AppTheme.TEXT_PRIMARY);
@@ -146,7 +181,7 @@ public class Sidebar extends JPanel {
     }
 
     private JComponent buildLogoutRow(Runnable onLogout) {
-        JPanel row = buildRow("\uD83D\uDEAA", "Logout"); // 🚪
+        JPanel row = buildRow(Icons.LOGOUT, "Logout");
         row.setBackground(AppTheme.SURFACE);
         row.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, AppTheme.DIVIDER),

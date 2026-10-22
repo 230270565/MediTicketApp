@@ -1,5 +1,6 @@
 package za.ac.cput.ui.clinicstaff.nurse.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -13,6 +14,7 @@ import za.ac.cput.ui.clinicstaff.nurse.NurseDashboard;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 import za.ac.cput.ui.theme.ImageManager;
 
@@ -28,7 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 
 
-public class DashboardPage extends JPanel {
+public class DashboardPage extends JPanel implements Refreshable {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMMM uuuu");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mm a");
@@ -71,6 +73,7 @@ public class DashboardPage extends JPanel {
     }
 
     /** Re-pulls all dashboard data from the backend. Safe to call repeatedly. */
+    @Override
     public void refresh() {
         if (loading) return;
         loading = true;
@@ -167,30 +170,30 @@ public class DashboardPage extends JPanel {
         pendingCard = new SummaryCard("Pending", "\u2014", AppTheme.STATUS_WARNING);
         openTicketsCard = new SummaryCard("Open Tickets", "\u2014", AppTheme.PRIMARY);
         paymentsCard = new SummaryCard("Payments", "\u2014", AppTheme.STATUS_INFO);
-        notificationsCard = new SummaryCard("Notifications", "\u2014", AppTheme.STATUS_DANGER);
+        notificationsCard = new SummaryCard("Unread Notifications", "\u2014", AppTheme.PRIMARY);
         JComponent[] summaryCards = { pendingCard, openTicketsCard, paymentsCard, notificationsCard };
         for (int col = 0; col < 4; col++) {
             GridBagConstraints c = bentoConstraints(col, 0, 1, 1, gap);
             c.weighty = 0;
             c.fill = GridBagConstraints.HORIZONTAL;
-            grid.add(summaryCards[col], c);
+            grid.add(equalWidth(summaryCards[col]), c);
         }
 
         // Row 1-2, col 0-1: Work Queue -- the big tile.
         GridBagConstraints wq = bentoConstraints(0, 1, 2, 2, gap);
-        grid.add(buildWorkQueueCard(), wq);
+        grid.add(equalWidth(buildWorkQueueCard()), wq);
 
         // Row 1, col 2: Recent Activity.
-        grid.add(buildActivityTile(), bentoConstraints(2, 1, 1, 1, gap));
+        grid.add(equalWidth(buildActivityTile()), bentoConstraints(2, 1, 1, 1, gap));
 
         // Row 1, col 3: Today's Appointments shortcut (new).
-        grid.add(buildTodaysAppointmentsTile(), bentoConstraints(3, 1, 1, 1, gap));
+        grid.add(equalWidth(buildTodaysAppointmentsTile()), bentoConstraints(3, 1, 1, 1, gap));
 
         // Row 2, col 2: Triage Progress.
-        grid.add(buildProgressTile(), bentoConstraints(2, 2, 1, 1, gap));
+        grid.add(equalWidth(buildProgressTile()), bentoConstraints(2, 2, 1, 1, gap));
 
         // Row 2, col 3: Patient Directory shortcut (new).
-        grid.add(buildPatientDirectoryTile(), bentoConstraints(3, 2, 1, 1, gap));
+        grid.add(equalWidth(buildPatientDirectoryTile()), bentoConstraints(3, 2, 1, 1, gap));
 
         // Row 3: tip banner, full width.
         GridBagConstraints tip = bentoConstraints(0, 3, 4, 1, gap);
@@ -199,6 +202,25 @@ public class DashboardPage extends JPanel {
         grid.add(buildTipBanner(), tip);
 
         return grid;
+    }
+
+    /**
+     * GridBagLayout sizes columns from each child's preferred width, so a tile with
+     * long text made its column (and the Payments card above it) three times wider.
+     * Reporting a preferred width of 0 lets the equal weights decide: four equal columns.
+     */
+    private static JComponent equalWidth(JComponent child) {
+        JPanel wrap = new JPanel(new BorderLayout()) {
+            @Override public Dimension getPreferredSize() {
+                return new Dimension(0, super.getPreferredSize().height);
+            }
+            @Override public Dimension getMinimumSize() {
+                return new Dimension(0, super.getMinimumSize().height);
+            }
+        };
+        wrap.setOpaque(false);
+        wrap.add(child, BorderLayout.CENTER);
+        return wrap;
     }
 
     private GridBagConstraints bentoConstraints(int gridx, int gridy, int gridwidth, int gridheight, int gap) {
@@ -225,7 +247,7 @@ public class DashboardPage extends JPanel {
         eyebrow.setForeground(AppTheme.PRIMARY);
         eyebrow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        greetingLabel = new JLabel("Good Morning \uD83D\uDC4B");
+        greetingLabel = new JLabel("Good Morning");
         greetingLabel.setFont(FontManager.headlineFont(Font.BOLD, 30));
         greetingLabel.setForeground(AppTheme.TEXT_PRIMARY);
         greetingLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -247,35 +269,18 @@ public class DashboardPage extends JPanel {
         row.setOpaque(false);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        PrimaryButton pending = new PrimaryButton("Appointments");
-        pending.setPreferredSize(new Dimension(200, 44));
-        pending.addActionListener(e -> owner.navigateTo("APPOINTMENTS"));
-
-        JButton tickets = outlineButton("Tickets");
-        tickets.addActionListener(e -> owner.navigateTo("TICKETS"));
-
-        JButton payments = outlineButton("Payments");
-        payments.addActionListener(e -> owner.navigateTo("PAYMENTS"));
-
-        row.add(pending);
-        row.add(tickets);
-        row.add(payments);
+        // Same quick-action style on every role's home page: first action filled, rest outlined.
+        row.add(quickAction("Review appointments", Icons.CALENDAR, true, "APPOINTMENTS"));
+        row.add(quickAction("Tickets", Icons.TICKET, false, "TICKETS"));
+        row.add(quickAction("Payments", Icons.CARD, false, "PAYMENTS"));
         return row;
     }
 
-    private JButton outlineButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        btn.setForeground(AppTheme.PRIMARY);
-        btn.setBackground(AppTheme.SURFACE);
-        btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(AppTheme.PRIMARY, 1, true),
-                BorderFactory.createEmptyBorder(10, 16, 10, 16)
-        ));
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(text.length() * 8 + 40, 44));
-        return btn;
+    private JButton quickAction(String label, String icon, boolean primary, String pageKey) {
+        JButton button = new JButton(label);
+        AppTheme.styleActionButton(button, primary, icon);
+        button.addActionListener(e -> owner.navigateTo(pageKey));
+        return button;
     }
 
     private JComponent buildWorkQueueCard() {
@@ -283,7 +288,7 @@ public class DashboardPage extends JPanel {
         card.setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Today's Work Queue");
-        title.setFont(FontManager.headlineFont(Font.BOLD, 16));
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
         title.setForeground(AppTheme.TEXT_PRIMARY);
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
         card.add(title, BorderLayout.NORTH);
@@ -315,7 +320,7 @@ public class DashboardPage extends JPanel {
         activityCard.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel activityTitle = new JLabel("Recent Activity");
-        activityTitle.setFont(FontManager.headlineFont(Font.BOLD, 15));
+        activityTitle.setFont(FontManager.bodyFont(Font.BOLD, 15));
         activityTitle.setForeground(AppTheme.TEXT_PRIMARY);
         activityTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
         activityCard.add(activityTitle, BorderLayout.NORTH);
@@ -479,7 +484,7 @@ public class DashboardPage extends JPanel {
     private void applyData() {
         SessionManager session = SessionManager.getInstance();
         String firstName = extractFirstName(session.getFullName());
-        greetingLabel.setText("Good " + timeOfDayGreeting() + (firstName.isEmpty() ? "" : ", " + firstName) + " \uD83D\uDC4B");
+        greetingLabel.setText("Good " + timeOfDayGreeting() + (firstName.isEmpty() ? "" : ", " + firstName));
 
         int pendingCount = pendingAppointments.size();
         subtitleLabel.setText("<html>Welcome back to MediTicket. Here's an overview of today's clinic activity. "
@@ -496,14 +501,15 @@ public class DashboardPage extends JPanel {
         pendingCard.setValue(String.valueOf(pendingCount));
         openTicketsCard.setValue(String.valueOf(openTickets));
         paymentsCard.setValue(String.valueOf(pendingPayments.size()));
-        notificationsCard.setValue(String.valueOf(staffNotifications.size()));
+        long unread = staffNotifications.stream().filter(Notification::isUnread).count();
+        notificationsCard.setValue(String.valueOf(unread));
 
         rebuildWorkQueue();
         rebuildActivity();
         rebuildProgress();
         rebuildTodaysAppointmentsTile();
 
-        owner.setHeaderUnreadCount(staffNotifications.size());
+        owner.setHeaderUnreadCount((int) unread);
     }
 
     private void rebuildWorkQueue() {
@@ -615,15 +621,11 @@ public class DashboardPage extends JPanel {
         return wrap;
     }
 
+    // Plain teal text link (was a boxed button with a rectangle drawn around the text).
     private JButton smallActionButton(String text, Color color) {
         JButton btn = new JButton(text);
-        btn.setFont(FontManager.bodyFont(Font.BOLD, 14));
+        AppTheme.styleLinkButton(btn);
         btn.setForeground(color);
-        btn.setBackground(AppTheme.SURFACE);
-        btn.setBorder(BorderFactory.createLineBorder(color, 1, true));
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setMargin(new Insets(8, 16, 8, 16));
         return btn;
     }
 
@@ -711,7 +713,7 @@ public class DashboardPage extends JPanel {
         ));
 
         JLabel title = new JLabel("Review Appointment");
-        title.setFont(FontManager.headlineFont(Font.BOLD, 18));
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
         title.setForeground(AppTheme.TEXT_PRIMARY);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
 

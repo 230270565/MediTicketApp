@@ -1,6 +1,8 @@
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.model.domain.Notification;
+import za.ac.cput.ui.layout.NotificationCard;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
 
@@ -16,7 +18,7 @@ public class NotificationDetailsDialog {
                             Runnable onSendFollowUp, Runnable onMarkAsRead) {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
                 "Notification Details", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(440, 420);
+        dialog.setSize(460, 470);
         dialog.setLocationRelativeTo(parent);
 
         JPanel content = new JPanel();
@@ -25,12 +27,19 @@ public class NotificationDetailsDialog {
         content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
 
         content.add(field("Recipient", recipientName));
-        content.add(field("Type", notification.getNotificationType()));
 
-        JLabel statusValue = new JLabel(notification.getNotificationStatus() != null ? notification.getNotificationStatus() : "—");
-        statusValue.setFont(FontManager.bodyFont(Font.BOLD, 14));
-        statusValue.setForeground(AppTheme.statusColor(notification.getNotificationStatus()));
-        content.add(labeledRow("Status", statusValue));
+        // What the notification is about (stage when it was sent), e.g. "Ticket · Open".
+        String[] stage = NotificationCard.stage(notification.getRelatedStatus());
+        if (stage != null) {
+            content.add(labeledRow("About", pillRow(new StatusPill(stage[0], stage[1]))));
+        }
+
+        // How it was delivered: always in-app; patients and doctors also get an email copy.
+        content.add(field("Delivered via", NotificationCard.channel(notification)));
+
+        content.add(labeledRow("Status", pillRow(notification.isUnread()
+                ? new StatusPill("Unread", "OPEN")
+                : new StatusPill("Read", "READ"))));
 
         content.add(field("Sent", notification.getNotificationDate() != null
                 ? notification.getNotificationDate().format(DATE_FMT) : "—"));
@@ -76,7 +85,7 @@ public class NotificationDetailsDialog {
         buttonRow.add(close);
 
         if (onSendFollowUp != null && notification.getTicket() != null) {
-            JButton followUp = new JButton("Send Follow-up");
+            JButton followUp = new JButton("Send follow-up");
             followUp.setFont(FontManager.bodyFont(Font.BOLD, 13));
             followUp.setForeground(AppTheme.TEXT_ON_PRIMARY);
             followUp.setBackground(AppTheme.PRIMARY);
@@ -111,6 +120,13 @@ public class NotificationDetailsDialog {
 
         dialog.setContentPane(content);
         dialog.setVisible(true);
+    }
+
+    private static JComponent pillRow(JComponent pill) {
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
+        row.setOpaque(false);
+        row.add(pill);
+        return row;
     }
 
     private static JComponent field(String label, String value) {

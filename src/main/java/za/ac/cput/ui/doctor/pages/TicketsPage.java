@@ -1,5 +1,7 @@
 package za.ac.cput.ui.doctor.pages;
 //JOSHUA REID ADAMS - 230317693
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.PatientTicket;
@@ -8,6 +10,7 @@ import za.ac.cput.ui.doctor.components.TicketDetailsDialog;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -17,9 +20,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class TicketsPage extends JPanel {
+public class TicketsPage extends JPanel implements Refreshable {
 
-    private SummaryCard openCard, inProgressCard, resolvedCard;
+    private SummaryCard openCard, inProgressCard, resolvedCard, closedCard;
     private DefaultTableModel tableModel;
     private JTable ticketsTable;
 
@@ -59,6 +62,12 @@ public class TicketsPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
     private JComponent buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
@@ -83,19 +92,22 @@ public class TicketsPage extends JPanel {
         textStack.add(title);
         textStack.add(subtitle);
 
-        JButton refreshButton = new JButton("\u27F3 Refresh");
-        refreshButton.setFont(FontManager.bodyFont(Font.BOLD, 12));
+        JButton refreshButton = new JButton("Refresh");
+        AppTheme.styleActionButton(refreshButton, false, Icons.REFRESH);
         refreshButton.setFocusPainted(false);
         refreshButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         refreshButton.addActionListener(e -> loadData());
 
         header.add(textStack, BorderLayout.WEST);
-        header.add(refreshButton, BorderLayout.EAST);
+        JPanel refreshButtonWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        refreshButtonWrap.setOpaque(false);
+        refreshButtonWrap.add(refreshButton);
+        header.add(refreshButtonWrap, BorderLayout.EAST);
         return header;
     }
 
     private JComponent buildSummaryCards() {
-        JPanel grid = new JPanel(new GridLayout(1, 3, AppTheme.SPACE_MD, 0));
+        JPanel grid = new JPanel(new GridLayout(1, 4, AppTheme.SPACE_MD, 0));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
         grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
@@ -103,10 +115,12 @@ public class TicketsPage extends JPanel {
         openCard = new SummaryCard("Open", "—", AppTheme.PRIMARY);
         inProgressCard = new SummaryCard("In Progress", "—", AppTheme.STATUS_INFO);
         resolvedCard = new SummaryCard("Resolved", "—", AppTheme.STATUS_SUCCESS);
+        closedCard = new SummaryCard("Closed", "—", AppTheme.STATUS_NEUTRAL);
 
         grid.add(openCard);
         grid.add(inProgressCard);
         grid.add(resolvedCard);
+        grid.add(closedCard);
         return grid;
     }
 
@@ -115,17 +129,15 @@ public class TicketsPage extends JPanel {
         bar.setOpaque(false);
 
         String[][] filters = {
-                {"ALL", "All"}, {"OPEN", "Open"}, {"IN_PROGRESS", "In Progress"}, {"RESOLVED", "Resolved"}
+                {"ALL", "All"}, {"OPEN", "Open"}, {"IN_PROGRESS", "In Progress"}, {"RESOLVED", "Resolved"},
+                {"CLOSED", "Closed"}
         };
 
         for (String[] f : filters) {
             JButton btn = new JButton(f[1]);
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 12));
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
                 renderTable();
@@ -146,6 +158,7 @@ public class TicketsPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         ticketsTable = new JTable(tableModel);
+        StatusPill.install(ticketsTable);
         ticketsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         ticketsTable.setRowHeight(40);
         ticketsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));
@@ -184,8 +197,7 @@ public class TicketsPage extends JPanel {
                 .filter(t -> t.getAppointment() != null
                         && t.getAppointment().getDoctor() != null
                         && t.getAppointment().getDoctor().getUserId() == doctorId)
-                .filter(t -> !"CLOSED".equals(t.getCurrentStatus()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()); // closed (paid) consultations stay visible as history
 
         updateSummaryCards();
         renderTable();
@@ -195,6 +207,7 @@ public class TicketsPage extends JPanel {
         openCard.setValue(String.valueOf(countByStatus("OPEN")));
         inProgressCard.setValue(String.valueOf(countByStatus("IN_PROGRESS")));
         resolvedCard.setValue(String.valueOf(countByStatus("RESOLVED")));
+        closedCard.setValue(String.valueOf(countByStatus("CLOSED")));
     }
 
     private long countByStatus(String status) {

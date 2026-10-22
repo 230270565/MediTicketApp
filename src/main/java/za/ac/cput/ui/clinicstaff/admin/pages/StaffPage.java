@@ -1,5 +1,7 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.ClinicStaff;
@@ -18,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class StaffPage extends JPanel {
+public class StaffPage extends JPanel implements Refreshable {
 
 
     private static class StaffRow {
@@ -64,6 +66,12 @@ public class StaffPage extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
+        loadData();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadData();
     }
 
@@ -117,12 +125,9 @@ public class StaffPage extends JPanel {
 
         for (String[] f : filters) {
             JButton btn = new JButton(f[1]);
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 12));
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
                 renderTable();
@@ -143,6 +148,7 @@ public class StaffPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         staffTable = new JTable(tableModel);
+        StatusPill.install(staffTable);
         staffTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         staffTable.setRowHeight(40);
         staffTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));

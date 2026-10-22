@@ -5,6 +5,7 @@ import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Notification;
 import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.clinicstaff.components.NotificationDetailsDialog;
+import za.ac.cput.ui.layout.LiveUpdater;
 import za.ac.cput.ui.layout.NotificationCard;
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.theme.AppTheme;
@@ -164,11 +165,28 @@ public class NotificationsPage extends JPanel implements Refreshable {
             rebuildFilterBar();
             renderNotifications();
             int id = n.getNotificationId();
-            new SwingWorker<Void, Void>() {
+            new SwingWorker<Boolean, Void>() {
                 @Override
-                protected Void doInBackground() {
-                    ApiClientProvider.getInstance().notifications().markAsRead(id);
-                    return null;
+                protected Boolean doInBackground() {
+                    return ApiClientProvider.getInstance().notifications().markAsRead(id).isSuccess();
+                }
+
+                @Override
+                protected void done() {
+                    boolean saved;
+                    try {
+                        saved = get();
+                    } catch (Exception e) {
+                        saved = false;
+                    }
+                    if (!saved) {
+                        // The server didn't store it: show it as unread again rather than pretend.
+                        n.setNotificationStatus("SENT");
+                        rebuildFilterBar();
+                        renderNotifications();
+                    }
+                    // Sidebar and bell counts go down straight away, not on the next 10-second tick.
+                    LiveUpdater.refreshBadgesNow();
                 }
             }.execute();
         }

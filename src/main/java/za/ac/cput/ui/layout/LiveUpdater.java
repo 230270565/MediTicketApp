@@ -31,6 +31,14 @@ public class LiveUpdater {
     private final Timer timer;
     private boolean countInFlight = false;
 
+    // The dashboard currently on screen, so a page can ask for the badges to update now.
+    private static LiveUpdater active;
+
+    /** Recount unread notifications right away (e.g. after one is opened). */
+    public static void refreshBadgesNow() {
+        if (active != null) active.updateUnreadCount();
+    }
+
     public LiveUpdater(JPanel pageContainer, Sidebar sidebar, TopHeader topHeader, String notificationsKey) {
         this.pageContainer = pageContainer;
         this.sidebar = sidebar;
@@ -41,12 +49,14 @@ public class LiveUpdater {
     }
 
     public void start() {
+        active = this;
         updateUnreadCount();
         timer.start();
     }
 
     public void stop() {
         timer.stop();
+        if (active == this) active = null;
     }
 
     /** Call after CardLayout.show(): reloads the page that just became visible. */

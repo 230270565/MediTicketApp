@@ -1,5 +1,7 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.auth.EmployeeAccessRequest;
@@ -15,7 +17,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.List;
 
-public class EmployeeOnboardingPage extends JPanel {
+public class EmployeeOnboardingPage extends JPanel implements Refreshable {
 
     private static final int ID_COLUMN = 4; // kept in the model for row lookups, hidden from view
 
@@ -43,6 +45,12 @@ public class EmployeeOnboardingPage extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
+        loadPendingRequests();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadPendingRequests();
     }
 
@@ -151,6 +159,7 @@ public class EmployeeOnboardingPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         requestsTable = new JTable(tableModel);
+        StatusPill.install(requestsTable);
         requestsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         requestsTable.setRowHeight(40);
         requestsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));

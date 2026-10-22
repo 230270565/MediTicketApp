@@ -1,5 +1,6 @@
 package za.ac.cput.ui.patient.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -18,7 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-public class DashboardPage extends JPanel {
+public class DashboardPage extends JPanel implements Refreshable {
 
     private SummaryCard pendingAppointmentsCard;
     private SummaryCard activeTicketsCard;
@@ -51,6 +52,12 @@ public class DashboardPage extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
+        loadData();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadData();
     }
 

@@ -1,5 +1,6 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.*;
@@ -15,7 +16,7 @@ import java.math.RoundingMode;
 import java.util.List;
 
 
-public class ReportsPage extends JPanel {
+public class ReportsPage extends JPanel implements Refreshable {
 
     private SummaryCard revenueCard, appointmentsCard, closedTicketsCard, avgFeeCard;
     private JPanel appointmentBreakdown, ticketBreakdown, paymentBreakdown, staffSnapshot;
@@ -42,6 +43,12 @@ public class ReportsPage extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
+        loadData();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadData();
     }
 

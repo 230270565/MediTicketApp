@@ -7,6 +7,7 @@ import za.ac.cput.ui.clinicstaff.nurse.pages.*;
 import za.ac.cput.ui.layout.NavItem;
 import za.ac.cput.ui.layout.Sidebar;
 import za.ac.cput.ui.layout.TopHeader;
+import za.ac.cput.ui.layout.LiveUpdater;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
 
@@ -27,6 +28,7 @@ public class NurseDashboard extends JPanel {
 
     private Sidebar sidebar;
     private TopHeader topHeader;
+    private LiveUpdater live; // real-time refresh of the visible page + unread badges
 
     private static final String PAGE_HOME = "HOME";
     private static final String PAGE_APPOINTMENTS = "APPOINTMENTS";
@@ -62,6 +64,12 @@ public class NurseDashboard extends JPanel {
 
         registerPages();
 
+        live = new LiveUpdater(pageContainer, sidebar, topHeader, PAGE_NOTIFICATIONS);
+        topHeader.setOnBellClick(() -> {
+            sidebar.select(PAGE_NOTIFICATIONS);
+            showPage(PAGE_NOTIFICATIONS);
+        });
+
         JPanel rightSide = new JPanel(new BorderLayout());
         rightSide.setBackground(AppTheme.BACKGROUND);
         rightSide.add(topHeader, BorderLayout.NORTH);
@@ -71,6 +79,7 @@ public class NurseDashboard extends JPanel {
         add(rightSide, BorderLayout.CENTER);
 
         showPage(PAGE_HOME);
+        live.start();
     }
 
     private void registerPages() {
@@ -95,6 +104,7 @@ public class NurseDashboard extends JPanel {
 
     private void showPage(String key) {
         pageLayout.show(pageContainer, key);
+        if (live != null) live.pageOpened();
     }
 
     /** Lets pages (e.g. DashboardPage's quick actions) navigate the shell. */
@@ -109,6 +119,7 @@ public class NurseDashboard extends JPanel {
     }
 
     private void onLogout() {
+        live.stop();
         ApiClientProvider.getInstance().getBaseApiClient().clearAuthToken();
         SessionManager.getInstance().clear();
         appFrame.showScreen(AppFrame.SCREEN_LOGIN);

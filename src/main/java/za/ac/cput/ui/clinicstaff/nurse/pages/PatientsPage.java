@@ -1,5 +1,7 @@
 package za.ac.cput.ui.clinicstaff.nurse.pages;
 //AIDAN BARENDS - 230155639
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Patient;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class PatientsPage extends JPanel {
+public class PatientsPage extends JPanel implements Refreshable {
 
     private SummaryCard totalCard, activeCard, newThisMonthCard;
     private DefaultTableModel tableModel;
@@ -75,6 +77,12 @@ public class PatientsPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
     private JComponent buildHeader() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -123,12 +131,9 @@ public class PatientsPage extends JPanel {
 
         for (String[] f : filters) {
             JButton btn = new JButton(f[1]);
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 12));
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
                 renderTable();
@@ -181,6 +186,7 @@ public class PatientsPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         patientsTable = new JTable(tableModel);
+        StatusPill.install(patientsTable);
         patientsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         patientsTable.setRowHeight(44);
         patientsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));

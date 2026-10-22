@@ -1,5 +1,6 @@
 package za.ac.cput.ui.clinicstaff.nurse.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -28,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 
 
-public class DashboardPage extends JPanel {
+public class DashboardPage extends JPanel implements Refreshable {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMMM uuuu");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mm a");
@@ -71,6 +72,7 @@ public class DashboardPage extends JPanel {
     }
 
     /** Re-pulls all dashboard data from the backend. Safe to call repeatedly. */
+    @Override
     public void refresh() {
         if (loading) return;
         loading = true;
@@ -283,7 +285,7 @@ public class DashboardPage extends JPanel {
         card.setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Today's Work Queue");
-        title.setFont(FontManager.headlineFont(Font.BOLD, 16));
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
         title.setForeground(AppTheme.TEXT_PRIMARY);
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
         card.add(title, BorderLayout.NORTH);
@@ -315,7 +317,7 @@ public class DashboardPage extends JPanel {
         activityCard.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel activityTitle = new JLabel("Recent Activity");
-        activityTitle.setFont(FontManager.headlineFont(Font.BOLD, 15));
+        activityTitle.setFont(FontManager.bodyFont(Font.BOLD, 15));
         activityTitle.setForeground(AppTheme.TEXT_PRIMARY);
         activityTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
         activityCard.add(activityTitle, BorderLayout.NORTH);
@@ -711,7 +713,7 @@ public class DashboardPage extends JPanel {
         ));
 
         JLabel title = new JLabel("Review Appointment");
-        title.setFont(FontManager.headlineFont(Font.BOLD, 18));
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
         title.setForeground(AppTheme.TEXT_PRIMARY);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
 

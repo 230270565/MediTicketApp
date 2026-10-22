@@ -1,5 +1,6 @@
 package za.ac.cput.ui.doctor.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class DashboardPage extends JPanel {
+public class DashboardPage extends JPanel implements Refreshable {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mm a");
 
@@ -64,6 +65,7 @@ public class DashboardPage extends JPanel {
     }
 
     /** Re-pulls all dashboard data from the backend. Safe to call repeatedly. */
+    @Override
     public void refresh() {
         if (loading) return;
         loading = true;
@@ -283,7 +285,7 @@ public class DashboardPage extends JPanel {
         card.setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Today's Schedule");
-        title.setFont(FontManager.headlineFont(Font.BOLD, 16));
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
         title.setForeground(AppTheme.TEXT_PRIMARY);
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
         card.add(title, BorderLayout.NORTH);
@@ -314,7 +316,7 @@ public class DashboardPage extends JPanel {
         card.setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Ticket Queue");
-        title.setFont(FontManager.headlineFont(Font.BOLD, 15));
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
         title.setForeground(AppTheme.TEXT_PRIMARY);
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
         card.add(title, BorderLayout.NORTH);
@@ -349,7 +351,7 @@ public class DashboardPage extends JPanel {
         activityCard.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel activityTitle = new JLabel("Recent Activity");
-        activityTitle.setFont(FontManager.headlineFont(Font.BOLD, 15));
+        activityTitle.setFont(FontManager.bodyFont(Font.BOLD, 15));
         activityTitle.setForeground(AppTheme.TEXT_PRIMARY);
         activityTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
         activityCard.add(activityTitle, BorderLayout.NORTH);

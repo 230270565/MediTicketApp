@@ -1,5 +1,7 @@
 package za.ac.cput.ui.doctor.pages;
 //AIDAN BARENDS - 230155639
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -23,7 +25,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
-public class PatientsPage extends JPanel {
+public class PatientsPage extends JPanel implements Refreshable {
 
     private SummaryCard totalPatientsCard, appointmentsThisMonthCard;
     private DefaultTableModel tableModel;
@@ -62,6 +64,12 @@ public class PatientsPage extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
+        loadData();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadData();
     }
 
@@ -126,6 +134,7 @@ public class PatientsPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         patientsTable = new JTable(tableModel);
+        StatusPill.install(patientsTable);
         patientsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         patientsTable.setRowHeight(40);
         patientsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));

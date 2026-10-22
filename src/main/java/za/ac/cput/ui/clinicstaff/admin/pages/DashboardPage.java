@@ -1,5 +1,6 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.auth.EmployeeAccessRequest;
@@ -18,7 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-public class DashboardPage extends JPanel {
+public class DashboardPage extends JPanel implements Refreshable {
 
     private SummaryCard staffCard;
     private SummaryCard invitesCard;
@@ -49,6 +50,12 @@ public class DashboardPage extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
+        loadData();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadData();
     }
 

@@ -1,5 +1,6 @@
 package za.ac.cput.ui.clinicstaff.admin.pages;
 //Raul Everts 230270565
+import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.*;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
  * Notifications are tied to a PatientTicket and its Appointment.
  * The ticket selector includes ALL tickets, including closed tickets.
  */
-public class NotificationsPage extends JPanel {
+public class NotificationsPage extends JPanel implements Refreshable {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM, HH:mm");
 
@@ -44,6 +45,12 @@ public class NotificationsPage extends JPanel {
 
         add(buildMainPanel(), BorderLayout.CENTER);
 
+        loadHistory();
+    }
+
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
         loadHistory();
     }
 
@@ -75,7 +82,7 @@ public class NotificationsPage extends JPanel {
 
         JLabel title = new JLabel("Sent Notifications");
 
-        title.setFont(FontManager.headlineFont(Font.BOLD, 20));
+        title.setFont(FontManager.headlineFont(Font.BOLD, 26));
 
         title.setForeground(AppTheme.TEXT_PRIMARY);
 
@@ -175,19 +182,15 @@ public class NotificationsPage extends JPanel {
 
             JButton btn = new JButton(f[1]);
 
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 11));
 
             btn.setFocusPainted(false);
 
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
 
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
 
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
 
-            btn.setMargin(new Insets(2, 8, 2, 8));
 
             btn.addActionListener(e -> {
 
@@ -291,7 +294,7 @@ public class NotificationsPage extends JPanel {
 
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
 
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
@@ -311,26 +314,15 @@ public class NotificationsPage extends JPanel {
 
         metaRow.setBorder(BorderFactory.createEmptyBorder(2, 0, 4, 0));
 
-        JLabel typeTag = new JLabel(n.getNotificationType() != null ? n.getNotificationType() : "—");
+        // Stage pill (what it was about) + whether the recipient has opened it + channel.
+        String[] stage = za.ac.cput.ui.layout.NotificationCard.stage(n.getRelatedStatus());
+        if (stage != null) metaRow.add(new za.ac.cput.ui.layout.StatusPill(stage[0], stage[1]));
 
-        typeTag.setFont(FontManager.bodyFont(Font.BOLD, 10));
-
-        typeTag.setForeground(AppTheme.TEXT_MUTED);
-
-        JLabel statusTag = new JLabel("\u00B7 " + (n.getNotificationStatus() != null ? n.getNotificationStatus() : "—"));
-
-        statusTag.setFont(FontManager.bodyFont(Font.BOLD, 10));
-
-        statusTag.setForeground(AppTheme.statusColor(n.getNotificationStatus()));
-
-        JLabel dateTag = new JLabel("\u00B7 " + (n.getNotificationDate() != null ? n.getNotificationDate().format(DATE_FMT) : "—"));
-
-        dateTag.setFont(FontManager.bodyFont(Font.PLAIN, 10));
-
+        JLabel dateTag = new JLabel((n.getNotificationDate() != null ? n.getNotificationDate().format(DATE_FMT) : "\u2014")
+                + "  \u00B7  " + za.ac.cput.ui.layout.NotificationCard.channel(n)
+                + "  \u00B7  " + (n.isUnread() ? "Not opened yet" : "Opened"));
+        dateTag.setFont(FontManager.bodyFont(Font.PLAIN, 11));
         dateTag.setForeground(AppTheme.TEXT_MUTED);
-
-        metaRow.add(typeTag);
-        metaRow.add(statusTag);
         metaRow.add(dateTag);
 
         String preview = n.getNotificationMessage() != null ? n.getNotificationMessage() : "";
@@ -673,7 +665,7 @@ public class NotificationsPage extends JPanel {
 
             notification.setNotificationType(notificationType);
 
-            notification.setNotificationStatus("PENDING");
+            notification.setNotificationStatus("SENT");
 
             notification.setNotificationMessage(message);
 
@@ -788,7 +780,7 @@ public class NotificationsPage extends JPanel {
             return;
         }
 
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Send Follow-Up", Dialog.ModalityType.APPLICATION_MODAL);
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Send follow-up", Dialog.ModalityType.APPLICATION_MODAL);
 
         dialog.setDefaultCloseOperation(2);
 
@@ -817,7 +809,7 @@ public class NotificationsPage extends JPanel {
 
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true), BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG)));
 
-        JLabel title = new JLabel("Send Follow-Up");
+        JLabel title = new JLabel("Send follow-up");
 
         title.setFont(FontManager.headlineFont(Font.BOLD, 20));
 
@@ -987,7 +979,7 @@ public class NotificationsPage extends JPanel {
 
         cancelButton.addActionListener(e -> dialog.dispose());
 
-        JButton sendButton = new JButton("Send Follow-Up");
+        JButton sendButton = new JButton("Send follow-up");
 
         sendButton.setFont(FontManager.bodyFont(Font.BOLD, 13));
 
@@ -1044,7 +1036,7 @@ public class NotificationsPage extends JPanel {
 
             notification.setNotificationType(notificationType);
 
-            notification.setNotificationStatus("PENDING");
+            notification.setNotificationStatus("SENT");
 
             notification.setNotificationMessage(message);
 

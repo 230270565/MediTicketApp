@@ -13,6 +13,8 @@ public class Notification {
     private PatientTicket ticket;
     private Appointment appointment;
     private LocalDateTime notificationDate;
+    private String relatedStatus;   // stage at creation: TICKET_OPEN, PAYMENT_DUE, ...
+    private boolean emailSent;      // true when an email copy was also delivered
 
     public Notification() {}
 
@@ -45,4 +47,12 @@ public class Notification {
 
     public LocalDateTime getNotificationDate() { return notificationDate; }
     public void setNotificationDate(LocalDateTime notificationDate) { this.notificationDate = notificationDate; }
+    public String getRelatedStatus() { return relatedStatus; }
+    public void setRelatedStatus(String relatedStatus) { this.relatedStatus = relatedStatus; }
+    public boolean isEmailSent() { return emailSent; }
+    public void setEmailSent(boolean emailSent) { this.emailSent = emailSent; }
+
+    /** Unread = anything not yet opened. Older rows saved as PENDING count as unread too. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public boolean isUnread() { return !"READ".equals(notificationStatus); }
 }

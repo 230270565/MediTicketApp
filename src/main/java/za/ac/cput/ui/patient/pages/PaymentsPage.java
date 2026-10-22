@@ -1,6 +1,8 @@
 package za.ac.cput.ui.patient.pages;
 //ABDULLAHI RAAGE FARAH - 230971091
 
+import za.ac.cput.ui.layout.Refreshable;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -21,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class PaymentsPage extends JPanel {
+public class PaymentsPage extends JPanel implements Refreshable {
 
     private DefaultTableModel tableModel;
     private JTable paymentsTable;
@@ -60,6 +62,12 @@ public class PaymentsPage extends JPanel {
         loadData();
     }
 
+    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
+    @Override
+    public void refresh() {
+        loadData();
+    }
+
     private JComponent buildHeader() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -93,12 +101,9 @@ public class PaymentsPage extends JPanel {
 
         for (String[] f : filters) {
             JButton btn = new JButton(f[1]);
-            btn.setFont(FontManager.bodyFont(Font.BOLD, 12));
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(f[0].equals(activeFilter) ? AppTheme.PRIMARY : AppTheme.SURFACE);
-            btn.setForeground(f[0].equals(activeFilter) ? AppTheme.TEXT_ON_PRIMARY : AppTheme.TEXT_PRIMARY);
-            btn.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
+            AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
                 renderTable();
@@ -119,6 +124,7 @@ public class PaymentsPage extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         paymentsTable = new JTable(tableModel);
+        StatusPill.install(paymentsTable);
         paymentsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         paymentsTable.setRowHeight(40);
         paymentsTable.getTableHeader().setFont(FontManager.bodyFont(Font.BOLD, 12));

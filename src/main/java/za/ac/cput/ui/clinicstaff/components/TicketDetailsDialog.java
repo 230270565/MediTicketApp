@@ -193,49 +193,6 @@ public class TicketDetailsDialog {
         return status != null ? status.replace("_", " ") : "—";
     }
 
-    private static JComponent buildHistoryList(PatientTicket ticket) {
-        JPanel list = new JPanel();
-        list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
-        list.setOpaque(false);
-        list.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        if (ticket.getStatusHistory() == null || ticket.getStatusHistory().isEmpty()) {
-            JLabel none = new JLabel("No history recorded.");
-            none.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-            none.setForeground(AppTheme.TEXT_MUTED);
-            list.add(none);
-            return list;
-        }
-
-        for (TicketStatus status : ticket.getStatusHistory()) {
-            JPanel row = new JPanel(new BorderLayout());
-            row.setOpaque(false);
-            row.setAlignmentX(Component.LEFT_ALIGNMENT);
-            row.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
-
-            JLabel statusLabel = new JLabel(statusBadgeText(status.getStatusType()));
-            statusLabel.setFont(FontManager.bodyFont(Font.BOLD, 12));
-            statusLabel.setForeground(AppTheme.statusColor(status.getStatusType()));
-
-            JLabel dateLabel = new JLabel(status.getStatusDate() != null ? status.getStatusDate().format(DATE_FMT) : "");
-            dateLabel.setFont(FontManager.bodyFont(Font.PLAIN, 11));
-            dateLabel.setForeground(AppTheme.TEXT_MUTED);
-
-            row.add(statusLabel, BorderLayout.WEST);
-            row.add(dateLabel, BorderLayout.EAST);
-            list.add(row);
-
-            if (status.getNotes() != null && !status.getNotes().isBlank()) {
-                JLabel notes = new JLabel("<html><i>" + status.getNotes() + "</i></html>");
-                notes.setFont(FontManager.bodyFont(Font.PLAIN, 11));
-                notes.setForeground(AppTheme.TEXT_SECONDARY);
-                notes.setAlignmentX(Component.LEFT_ALIGNMENT);
-                notes.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
-                list.add(notes);
-            }
-        }
-        return list;
-    }
 
     private static JComponent fieldBlock(String label, String value) {
         JLabel valueLabel = new JLabel(value);

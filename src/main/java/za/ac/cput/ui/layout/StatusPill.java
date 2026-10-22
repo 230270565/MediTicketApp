@@ -73,7 +73,12 @@ public class StatusPill extends JLabel {
 
     private static Color rowBackground(JTable table, int row, boolean isSelected) {
         if (isSelected) return table.getSelectionBackground();
-        Point mouse = table.getMousePosition();
+        Point mouse;
+        try {
+            mouse = table.getMousePosition();
+        } catch (HeadlessException e) {
+            mouse = null; // no mouse (e.g. rendering a preview)
+        }
         boolean hovered = mouse != null && table.rowAtPoint(mouse) == row;
         return hovered ? AppTheme.SURFACE_ALT : AppTheme.SURFACE;
     }
@@ -90,24 +95,47 @@ public class StatusPill extends JLabel {
         }
     }
 
-    /** Table cell renderer: the pill sits left-aligned and vertically centred in the cell. */
+    /**
+     * Table cell renderer: paints the pill directly. (JTable paints renderers without
+     * laying them out, so a panel-with-a-pill renderer would draw at zero size.)
+     */
     private static final class Renderer extends DefaultTableCellRenderer {
-        private final JPanel cell = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        private final StatusPill pill = new StatusPill(null);
+        private Color rowBg = AppTheme.SURFACE;
+        private Color pillBg = AppTheme.STATUS_NEUTRAL_BG;
 
         Renderer() {
-            cell.add(pill);
+            setFont(FontManager.bodyFont(Font.BOLD, 11));
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
-            pill.setStatus(value != null ? value.toString() : null);
-            cell.setBackground(rowBackground(table, row, isSelected));
-            int pillHeight = pill.getPreferredSize().height;
-            int top = Math.max(0, (table.getRowHeight(row) - pillHeight) / 2);
-            ((FlowLayout) cell.getLayout()).setVgap(top);
-            return cell;
+            String status = value != null ? value.toString() : null;
+            setText(AppTheme.label(status));
+            setForeground(AppTheme.statusColor(status));
+            pillBg = AppTheme.statusBackground(status);
+            rowBg = rowBackground(table, row, isSelected);
+            return this;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2.setColor(rowBg);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.setFont(getFont());
+            FontMetrics fm = g2.getFontMetrics();
+            String text = getText();
+            int pillW = fm.stringWidth(text) + 20;
+            int pillH = fm.getHeight() + 6;
+            int x = 8, y = (getHeight() - pillH) / 2;
+            g2.setColor(pillBg);
+            g2.fillRoundRect(x, y, pillW, pillH, pillH, pillH);
+            g2.setColor(getForeground());
+            g2.drawString(text, x + 10, y + 3 + fm.getAscent());
+            g2.dispose();
         }
     }
 }

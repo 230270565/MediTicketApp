@@ -9,6 +9,7 @@ import za.ac.cput.ui.layout.Sidebar;
 import za.ac.cput.ui.layout.TopHeader;
 import za.ac.cput.ui.layout.LiveUpdater;
 import za.ac.cput.ui.theme.AppTheme;
+import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
@@ -42,16 +43,16 @@ public class AdminDashboard extends JPanel {
         setBackground(AppTheme.BACKGROUND);
 
         List<NavItem> navItems = List.of(
-                new NavItem(PAGE_HOME, "\uD83C\uDFE0", "Home"),
-                new NavItem(PAGE_APPOINTMENTS, "\uD83D\uDCC5", "Appointments"),
-                new NavItem(PAGE_STAFF, "\uD83D\uDC65", "Staff"),
-                new NavItem(PAGE_PATIENTS, "\uD83D\uDECC", "Patients"),
-                new NavItem(PAGE_ONBOARDING, "\uD83D\uDCCB", "Onboarding"),
-                new NavItem(PAGE_TICKETS, "\uD83C\uDFAB", "Tickets"),
-                new NavItem(PAGE_REPORTS, "\uD83D\uDCCA", "Reports"),
-                new NavItem(PAGE_NOTIFICATIONS, "\uD83D\uDD14", "Notifications"),
-                new NavItem(PAGE_PAYMENTS, "\uD83D\uDCB3", "Payments"),
-                new NavItem(PAGE_PROFILE, "\uD83D\uDC64", "Profile")
+                new NavItem(PAGE_HOME, Icons.HOME, "Home"),
+                new NavItem(PAGE_APPOINTMENTS, Icons.CALENDAR, "Appointments"),
+                new NavItem(PAGE_STAFF, Icons.USERS, "Staff"),
+                new NavItem(PAGE_PATIENTS, Icons.USERS, "Patients"),
+                new NavItem(PAGE_ONBOARDING, Icons.CLIPBOARD, "Onboarding"),
+                new NavItem(PAGE_TICKETS, Icons.TICKET, "Tickets"),
+                new NavItem(PAGE_REPORTS, Icons.CHART, "Reports"),
+                new NavItem(PAGE_NOTIFICATIONS, Icons.BELL, "Notifications"),
+                new NavItem(PAGE_PAYMENTS, Icons.CARD, "Payments"),
+                new NavItem(PAGE_PROFILE, Icons.USER, "Profile")
         );
 
         sidebar = new Sidebar(navItems, PAGE_HOME, this::showPage, this::onLogout);

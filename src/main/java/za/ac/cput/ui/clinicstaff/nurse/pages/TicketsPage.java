@@ -246,7 +246,13 @@ public class TicketsPage extends JPanel implements Refreshable {
     private void updateNeedsAttention() {
         needsAttentionSection.removeAll();
 
-        long readyForPayment = countByStatus("RESOLVED");
+        // Resolved tickets that still have no payment request (a generated, unpaid payment
+        // is the patient's turn, not the nurse's).
+        long readyForPayment = allTickets.stream()
+                .filter(t -> "RESOLVED".equals(t.getCurrentStatus()))
+                .filter(t -> t.getAppointment() == null
+                        || !paymentsByAppointmentId.containsKey(t.getAppointment().getAppointmentId()))
+                .count();
         long escalated = countByStatus("ESCALATED");
 
         if (readyForPayment == 0 && escalated == 0) {

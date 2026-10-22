@@ -82,7 +82,8 @@ public class AppDialog {
     }
 
     private static JComponent iconBadge(Type type) {
-        JLabel icon = new JLabel(iconTextFor(type), SwingConstants.CENTER) {
+        // Vector icon (the ✕ and ℹ text glyphs aren't in the Inter font).
+        JLabel icon = new JLabel(Icons.get(iconNameFor(type), 26, colorFor(type)), SwingConstants.CENTER) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -117,11 +118,11 @@ public class AppDialog {
         };
     }
 
-    private static String iconTextFor(Type type) {
+    private static String iconNameFor(Type type) {
         return switch (type) {
-            case SUCCESS -> "\u2713";
-            case ERROR -> "\u2715";
-            case INFO -> "\u2139";
+            case SUCCESS -> Icons.CHECK;
+            case ERROR -> Icons.X;
+            case INFO -> Icons.INFO;
         };
     }
 

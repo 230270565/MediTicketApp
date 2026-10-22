@@ -1,5 +1,7 @@
 package za.ac.cput.ui.doctor.components;
 
+import za.ac.cput.ui.layout.StatusTimeline;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.PatientTicket;
@@ -24,7 +26,7 @@ public class TicketDetailsDialog {
         dialog.setSize(460, 520);
         dialog.setLocationRelativeTo(parent);
 
-        JPanel content = new JPanel();
+        JPanel content = new StatusTimeline.WidthTrackingPanel(); // wraps instead of scrolling sideways
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(AppTheme.SURFACE);
         content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
@@ -36,14 +38,14 @@ public class TicketDetailsDialog {
                         (ticket.getAppointment().getAppointmentTime() != null ? ticket.getAppointment().getAppointmentTime() : "")
                         : "—"));
 
-        JLabel statusValue = new JLabel(statusBadgeText(ticket.getCurrentStatus()));
-        statusValue.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        statusValue.setForeground(AppTheme.statusColor(ticket.getCurrentStatus()));
+        JPanel statusValue = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
+        statusValue.setOpaque(false);
+        statusValue.add(new StatusPill(ticket.getCurrentStatus()));
         content.add(labeledRow("Ticket Status", statusValue));
 
         content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
         content.add(sectionTitle("Status History"));
-        content.add(buildHistoryList(ticket));
+        content.add(StatusTimeline.build(ticket.getStatusHistory()));
 
         content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
 
@@ -84,6 +86,7 @@ public class TicketDetailsDialog {
         }
 
         JScrollPane scroll = new JScrollPane(content);
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(null);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
 

@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class TicketsPage extends JPanel implements Refreshable {
 
-    private SummaryCard openCard, inProgressCard, resolvedCard;
+    private SummaryCard openCard, inProgressCard, resolvedCard, closedCard;
     private DefaultTableModel tableModel;
     private JTable ticketsTable;
 
@@ -107,7 +107,7 @@ public class TicketsPage extends JPanel implements Refreshable {
     }
 
     private JComponent buildSummaryCards() {
-        JPanel grid = new JPanel(new GridLayout(1, 3, AppTheme.SPACE_MD, 0));
+        JPanel grid = new JPanel(new GridLayout(1, 4, AppTheme.SPACE_MD, 0));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
         grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
@@ -115,10 +115,12 @@ public class TicketsPage extends JPanel implements Refreshable {
         openCard = new SummaryCard("Open", "—", AppTheme.PRIMARY);
         inProgressCard = new SummaryCard("In Progress", "—", AppTheme.STATUS_INFO);
         resolvedCard = new SummaryCard("Resolved", "—", AppTheme.STATUS_SUCCESS);
+        closedCard = new SummaryCard("Closed", "—", AppTheme.STATUS_NEUTRAL);
 
         grid.add(openCard);
         grid.add(inProgressCard);
         grid.add(resolvedCard);
+        grid.add(closedCard);
         return grid;
     }
 
@@ -127,7 +129,8 @@ public class TicketsPage extends JPanel implements Refreshable {
         bar.setOpaque(false);
 
         String[][] filters = {
-                {"ALL", "All"}, {"OPEN", "Open"}, {"IN_PROGRESS", "In Progress"}, {"RESOLVED", "Resolved"}
+                {"ALL", "All"}, {"OPEN", "Open"}, {"IN_PROGRESS", "In Progress"}, {"RESOLVED", "Resolved"},
+                {"CLOSED", "Closed"}
         };
 
         for (String[] f : filters) {
@@ -194,8 +197,7 @@ public class TicketsPage extends JPanel implements Refreshable {
                 .filter(t -> t.getAppointment() != null
                         && t.getAppointment().getDoctor() != null
                         && t.getAppointment().getDoctor().getUserId() == doctorId)
-                .filter(t -> !"CLOSED".equals(t.getCurrentStatus()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()); // closed (paid) consultations stay visible as history
 
         updateSummaryCards();
         renderTable();
@@ -205,6 +207,7 @@ public class TicketsPage extends JPanel implements Refreshable {
         openCard.setValue(String.valueOf(countByStatus("OPEN")));
         inProgressCard.setValue(String.valueOf(countByStatus("IN_PROGRESS")));
         resolvedCard.setValue(String.valueOf(countByStatus("RESOLVED")));
+        closedCard.setValue(String.valueOf(countByStatus("CLOSED")));
     }
 
     private long countByStatus(String status) {

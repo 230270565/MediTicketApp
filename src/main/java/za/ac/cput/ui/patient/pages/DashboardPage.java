@@ -384,9 +384,9 @@ public class DashboardPage extends JPanel implements Refreshable {
         dateTimeRow.setOpaque(false);
         dateTimeRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         dateTimeRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
-        dateTimeRow.add(dateTimeChip("\uD83D\uDCC5", "DATE", appointment.getAppointmentDate() != null
+        dateTimeRow.add(dateTimeChip(Icons.CALENDAR, "DATE", appointment.getAppointmentDate() != null
                 ? appointment.getAppointmentDate().format(DATE_FMT) : "\u2014"));
-        dateTimeRow.add(dateTimeChip("\uD83D\uDD52", "TIME", appointment.getAppointmentTime() != null
+        dateTimeRow.add(dateTimeChip(Icons.CLOCK, "TIME", appointment.getAppointmentTime() != null
                 ? appointment.getAppointmentTime().format(TIME_FMT) : "\u2014"));
 
         nextAppointmentBody.add(tagRow);

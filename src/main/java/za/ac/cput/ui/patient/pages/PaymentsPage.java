@@ -31,6 +31,7 @@ public class PaymentsPage extends JPanel implements Refreshable {
     private List<Payment> myPayments = List.of();
     private String activeFilter = "ALL";
     private JPanel filterBarContainer;
+    private za.ac.cput.ui.clinicstaff.components.SummaryCard dueCard, paidCard, totalPaidCard;
 
     public PaymentsPage() {
         setLayout(new BorderLayout());
@@ -42,6 +43,8 @@ public class PaymentsPage extends JPanel implements Refreshable {
         content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
 
         content.add(buildHeader());
+        content.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
+        content.add(buildSummaryCards());
         content.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
 
         filterBarContainer = new JPanel(new BorderLayout());
@@ -185,6 +188,21 @@ public class PaymentsPage extends JPanel implements Refreshable {
 
 
 
+    // Summary cards, same pattern as the Tickets page and the staff Payments page.
+    private JComponent buildSummaryCards() {
+        JPanel grid = new JPanel(new GridLayout(1, 3, AppTheme.SPACE_MD, 0));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        dueCard = new za.ac.cput.ui.clinicstaff.components.SummaryCard("Payments Due", "\u2014", AppTheme.STATUS_WARNING);
+        paidCard = new za.ac.cput.ui.clinicstaff.components.SummaryCard("Paid", "\u2014", AppTheme.STATUS_SUCCESS);
+        totalPaidCard = new za.ac.cput.ui.clinicstaff.components.SummaryCard("Total Paid", "\u2014", AppTheme.PRIMARY);
+        grid.add(dueCard);
+        grid.add(paidCard);
+        grid.add(totalPaidCard);
+        return grid;
+    }
+
     private void loadData() {
         int patientId = SessionManager.getInstance().getUserId();
 
@@ -196,6 +214,16 @@ public class PaymentsPage extends JPanel implements Refreshable {
                         && p.getAppointment().getPatient() != null
                         && p.getAppointment().getPatient().getUserId() == patientId)
                 .collect(Collectors.toList());
+
+        long due = myPayments.stream().filter(p -> "PENDING".equals(p.getPaymentStatus())).count();
+        long paid = myPayments.stream().filter(p -> "PAID".equals(p.getPaymentStatus())).count();
+        java.math.BigDecimal totalPaid = myPayments.stream()
+                .filter(p -> "PAID".equals(p.getPaymentStatus()) && p.getPaymentAmount() != null)
+                .map(Payment::getPaymentAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        dueCard.setValue(String.valueOf(due));
+        paidCard.setValue(String.valueOf(paid));
+        totalPaidCard.setValue("R" + totalPaid.setScale(2, java.math.RoundingMode.HALF_UP));
 
         renderTable();
     }

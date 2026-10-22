@@ -158,7 +158,22 @@ public class EmployeeOnboardingPage extends JPanel implements Refreshable {
             @Override
             public boolean isCellEditable(int row, int col) { return false; }
         };
-        requestsTable = new JTable(tableModel);
+        // Empty state: say what belongs here instead of showing a blank table.
+        requestsTable = new JTable(tableModel) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getRowCount() == 0) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+                    g2.setColor(AppTheme.TEXT_MUTED);
+                    g2.drawString("No pending requests. Employees who request access will appear here.", 16, 32);
+                    g2.dispose();
+                }
+            }
+        };
+        requestsTable.setFillsViewportHeight(true);
         StatusPill.install(requestsTable);
         requestsTable.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         requestsTable.setRowHeight(40);

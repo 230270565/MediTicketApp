@@ -167,7 +167,9 @@ public class PatientsPage extends JPanel implements Refreshable {
         clearInactiveButton.setFont(FontManager.bodyFont(Font.BOLD, 12));
         clearInactiveButton.setForeground(AppTheme.STATUS_DANGER);
         clearInactiveButton.setBackground(AppTheme.SURFACE);
-        clearInactiveButton.setBorder(BorderFactory.createLineBorder(AppTheme.STATUS_DANGER, 1, true));
+        // Danger outline with proper padding; the click still asks for confirmation first.
+        clearInactiveButton.putClientProperty("FlatLaf.style",
+                "arc: 10; borderWidth: 1; focusWidth: 0; innerFocusWidth: 0; margin: 6,14,6,14; borderColor: #D64545; hoverBackground: #FAE6E6;");
         clearInactiveButton.setFocusPainted(false);
         clearInactiveButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         clearInactiveButton.addActionListener(e -> onClearInactive());

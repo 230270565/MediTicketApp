@@ -64,7 +64,7 @@ public final class Icons {
             case "🚪" -> LOGOUT;        // door
             case "🕒" -> CLOCK;         // clock
             case "🚩" -> FLAG;          // flag
-            default -> emoji.length() > 2 ? emoji : INFO; // already an icon name
+            default -> PAINTERS.containsKey(emoji) ? emoji : INFO; // already an icon name
         };
     }
 

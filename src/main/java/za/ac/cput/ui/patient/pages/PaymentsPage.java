@@ -1,5 +1,14 @@
+/*
+ PaymentsPage.java
+
+ Patient Payments page
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.patient.pages;
-//ABDULLAHI RAAGE FARAH - 230971091
 
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.layout.StatusPill;
@@ -21,7 +30,6 @@ import java.awt.*;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 public class PaymentsPage extends JPanel implements Refreshable {
 
@@ -185,8 +193,6 @@ public class PaymentsPage extends JPanel implements Refreshable {
             default -> method;
         };
     }
-
-
 
     // Summary cards, same pattern as the Tickets page and the staff Payments page.
     private JComponent buildSummaryCards() {

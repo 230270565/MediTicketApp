@@ -1,3 +1,13 @@
+/*
+ JwtUtil.java
+
+ Reads the role and expiry out of the JWT
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.security;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -6,12 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-/**
- * Client-side JWT claim reader. Does NOT verify the signature — that's the
- * backend's job on every request via JwtAuthFilter. This only decodes the
- * payload so the UI knows who's logged in (userId, userType, staffRole)
- * without an extra round trip.
- */
+// Reads the claims out of the token so the app knows who is logged in.
+// It doesn't check the signature, the backend does that.
 public class JwtUtil {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();

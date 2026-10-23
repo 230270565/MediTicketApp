@@ -1,3 +1,13 @@
+/*
+ ChangePasswordDialog.java
+
+ Dialog for change password
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 15th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.api.ApiClientProvider;

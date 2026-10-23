@@ -1,3 +1,13 @@
+/*
+ LoginPanel.java
+
+ Login screen
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.auth;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -23,7 +33,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-
 public class LoginPanel extends JPanel {
 
     private final AppFrame appFrame;
@@ -39,8 +48,6 @@ public class LoginPanel extends JPanel {
         add(buildHeroSection());
         add(buildFormSection());
     }
-
-
 
     private JComponent buildHeroSection() {
         JPanel hero = new JPanel(new GridBagLayout()) {
@@ -78,8 +85,6 @@ public class LoginPanel extends JPanel {
         hero.add(content);
         return hero;
     }
-
-
 
     private JComponent buildFormSection() {
         JPanel wrapper = new JPanel(new GridBagLayout());
@@ -141,7 +146,6 @@ public class LoginPanel extends JPanel {
         return wrapper;
     }
 
-
     private JLabel buildLinkRow(String prefix, String linkText, Runnable onClick) {
         JLabel combined = new JLabel(
                 "<html>" + prefix + " <span style='color:#0E7C86;font-weight:bold;'>" + linkText + "</span></html>"
@@ -156,7 +160,6 @@ public class LoginPanel extends JPanel {
         });
         return combined;
     }
-
 
     private void onSignIn() {
         String email = emailField.getText().trim();
@@ -175,13 +178,13 @@ public class LoginPanel extends JPanel {
                 new SwingWorker<>() {
                     @Override
                     protected BaseApiClient.ApiResult<AuthResponse> doInBackground() {
-                        // Runs off the EDT — safe to block here.
+                        // Runs in the background, so it can wait for the backend.
                         return ApiClientProvider.getInstance().auth().login(new LoginRequest(email, password));
                     }
 
                     @Override
                     protected void done() {
-                        // Back on the EDT automatically — safe to touch Swing components here.
+                        // Back on the Swing thread, so we can update the screen.
                         signInButton.setEnabled(true);
                         signInButton.setText("Sign In");
 
@@ -221,7 +224,6 @@ public class LoginPanel extends JPanel {
 
         ApiClientProvider.getInstance().getBaseApiClient().setAuthToken(token);
 
-
         if ("CLINIC_STAFF".equals(session.getUserType())) {
             var staff = ApiClientProvider.getInstance().clinicStaff().findByEmail(session.getEmail());
             if (staff.isSuccess() && staff.getData() != null) session.setFullName(staff.getData().getName().getFullName());
@@ -232,7 +234,6 @@ public class LoginPanel extends JPanel {
             var doctor = ApiClientProvider.getInstance().doctors().findByEmail(session.getEmail());
             if (doctor.isSuccess() && doctor.getData() != null) session.setFullName(doctor.getData().getName().getFullName());
         }
-
 
         if (session.isAdmin()) {
             AdminDashboard dashboard = new AdminDashboard(appFrame);
@@ -247,7 +248,7 @@ public class LoginPanel extends JPanel {
             appFrame.addScreen(AppFrame.SCREEN_PATIENT_DASHBOARD, dashboard);
             appFrame.showScreen(AppFrame.SCREEN_PATIENT_DASHBOARD);
         } else if ("CLINIC_STAFF".equals(session.getUserType())) {
-            // NURSE — the only non-admin CLINIC_STAFF role right now.
+            // Nurse is the only other staff role.
             NurseDashboard dashboard = new NurseDashboard(appFrame);
             appFrame.addScreen(AppFrame.SCREEN_NURSE_DASHBOARD, dashboard);
             appFrame.showScreen(AppFrame.SCREEN_NURSE_DASHBOARD);

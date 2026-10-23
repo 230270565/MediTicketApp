@@ -1,3 +1,13 @@
+/*
+ GeneratePaymentDialog.java
+
+ Dialog for generate payment
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -12,7 +22,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
 
 public class GeneratePaymentDialog {
 

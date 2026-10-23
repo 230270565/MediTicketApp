@@ -1,3 +1,20 @@
+/*
+ FontManager.java
+
+ Loads the app fonts and hands out font sizes
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.theme;
 
 import java.awt.*;
@@ -8,19 +25,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Loads and registers the app's custom fonts (Inter, Playfair Display)
- * from the classpath, then hands out sized/styled Font instances.
- *
- * Inter is loaded as Regular + Italic variable-font instances; bold Inter
- * is synthetic (Font.deriveFont(BOLD, ...)) since only those two weight
- * files are bundled — acceptable at typical UI sizes (14–16px).
- *
- * Playfair Display has a true Bold cut bundled alongside Regular/Italic,
- * so headline bold requests resolve to a real bold font, not a synthetic
- * transform — important since headlines render much larger than body text
- * and synthetic bolding looks noticeably mushy at that scale.
- */
+// Loads Inter and Playfair Display and hands out fonts by size.
+// Inter bold is made with deriveFont, Playfair has a real bold file.
 public class FontManager {
 
     private static final Logger LOGGER = Logger.getLogger(FontManager.class.getName());
@@ -40,11 +46,7 @@ public class FontManager {
     private static final Map<String, Font> BASE_FONTS = new HashMap<>();
     private static boolean registered = false;
 
-    /**
-     * Loads all bundled TTFs into the JVM's graphics environment and caches
-     * the base Font instances. Must be called once, before AppTheme applies
-     * any UIManager font defaults.
-     */
+    // Call once before AppTheme sets the fonts.
     public static void registerFonts() {
         if (registered) return;
 
@@ -71,9 +73,7 @@ public class FontManager {
         }
     }
 
-    // ── Body text — Inter ────────────────────────────────────────
-    // Used for all standard UI: labels, buttons, fields, tables, menus.
-    // Bold is synthetic (deriveFont) — fine at UI text sizes.
+    // Body text (Inter)
 
     public static Font bodyFont(int style, float size) {
         Font base = pickInterBase(style);
@@ -84,26 +84,20 @@ public class FontManager {
         return bodyFont(Font.PLAIN, size);
     }
 
-    // ── Headline / display text — Playfair Display ─────────────
-    // Reserved for hero sections, landing page headings, dashboard
-    // welcome banners. Bold resolves to the true Bold TTF, not a
-    // synthetic transform.
+    // Headings (Playfair Display)
 
     public static Font headlineFont(int style, float size) {
         boolean italic = (style & Font.ITALIC) != 0;
         boolean bold = (style & Font.BOLD) != 0;
 
         if (bold && !italic) {
-            // True bold cut — no synthetic transform needed
+            // Real bold file
             Font boldBase = fallbackIfMissing(FAMILY_PLAYFAIR + "-Bold", Font.SERIF);
             return boldBase.deriveFont(Font.PLAIN, size);
         }
 
         if (bold) {
-            // Bold + Italic requested but only Bold (upright) and Italic
-            // (regular-weight) cuts are bundled — no bold-italic file.
-            // Fall back to synthetically bolding the italic cut rather
-            // than silently dropping the italic.
+            // No bold italic file, so bold the italic one.
             Font italicBase = fallbackIfMissing(FAMILY_PLAYFAIR + "-Italic", Font.SERIF);
             return italicBase.deriveFont(Font.BOLD, size);
         }
@@ -116,8 +110,7 @@ public class FontManager {
         return headlineFont(Font.PLAIN, size);
     }
 
-    // ── Resolution helpers ───────────────────────────────────────
-
+    // Resolution helpers
     private static Font pickInterBase(int style) {
         boolean italic = (style & Font.ITALIC) != 0;
         String key = italic ? FAMILY_INTER + "-Italic" : FAMILY_INTER + "-Regular";

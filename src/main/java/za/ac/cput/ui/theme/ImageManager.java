@@ -1,3 +1,20 @@
+/*
+ ImageManager.java
+
+ Loads and caches the images used in the app
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.theme;
 
 import javax.imageio.ImageIO;
@@ -11,23 +28,14 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Loads and caches the app's bundled images (hero art, icons, logos,
- * placeholders) from the classpath, and hands out Swing-ready ImageIcon
- * instances at whatever size a screen needs.
- *
- * Images are loaded once into a BufferedImage cache keyed by resource path,
- * then scaled on demand and cached separately by (path, width, height) so
- * repeated requests at the same size don't re-scale every paint cycle.
- */
+// Loads the app images once and keeps scaled copies so they aren't resized on every paint.
 public class ImageManager {
 
     private static final Logger LOGGER = Logger.getLogger(ImageManager.class.getName());
 
     private static final String IMAGES_PATH = "/images/";
 
-    // ── Known resource paths ────────────────────────────────────
-
+    // Known resource paths
     public static final String HERO_BACKGROUND = "hero/herobg.jpg";
 
     public static final String ICON_SHIELD       = "icons/Shield.png";
@@ -46,27 +54,18 @@ public class ImageManager {
 
     public static final String PLACEHOLDER_AVATAR = "placeholders/Avatar.png";
 
-    // ── Caches ──────────────────────────────────────────────────
-
+    // Caches
     private static final Map<String, BufferedImage> RAW_CACHE = new HashMap<>();
     private static final Map<String, ImageIcon> SCALED_CACHE = new HashMap<>();
 
     private ImageManager() {}
 
-    // ── Public API ──────────────────────────────────────────────
-
-    /**
-     * Returns the image at its native resolution, wrapped as an ImageIcon.
-     */
+    // Public API
     public static ImageIcon getIcon(String resourcePath) {
         return getIcon(resourcePath, -1, -1);
     }
 
-    /**
-     * Returns the image scaled to the given width/height (in pixels),
-     * preserving aspect ratio if either dimension is passed as -1.
-     * Pass both as -1 for native size (same as getIcon(String)).
-     */
+    // Pass -1 for width or height to keep the shape.
     public static ImageIcon getIcon(String resourcePath, int width, int height) {
         String cacheKey = resourcePath + ":" + width + "x" + height;
         ImageIcon cached = SCALED_CACHE.get(cacheKey);
@@ -85,22 +84,12 @@ public class ImageManager {
         return icon;
     }
 
-    /**
-     * Returns the raw BufferedImage — useful for custom painting
-     * (e.g. drawing the hero background across a panel with a gradient
-     * overlay) rather than dropping it into a JLabel via ImageIcon.
-     */
+    // The image itself, for custom painting.
     public static BufferedImage getImage(String resourcePath) {
         return loadRaw(resourcePath);
     }
 
-    /**
-     * Convenience for circular avatar rendering — clips the given image
-     * (or the bundled placeholder if imagePath is null) into a circle at
-     * the requested diameter. Used for user avatars in headers/profile
-     * pages where no uploaded photo exists yet, since Patient/Doctor/
-     * ClinicStaff carry no photo field currently.
-     */
+    // Round avatar. Uses the placeholder if there is no photo.
     public static ImageIcon getCircularAvatar(String imagePath, int diameter) {
         String path = (imagePath != null) ? imagePath : PLACEHOLDER_AVATAR;
         BufferedImage raw = loadRaw(path);
@@ -120,11 +109,7 @@ public class ImageManager {
         return new ImageIcon(circular);
     }
 
-    /**
-     * Preloads all known bundled images into the raw cache. Optional —
-     * call at startup (e.g. from AppTheme.initialize()) to avoid a first-use
-     * disk/classpath read stall on whichever screen opens first.
-     */
+    // Loads all images at startup so the first screen opens faster.
     public static void preloadAll() {
         String[] all = {
                 HERO_BACKGROUND,
@@ -138,8 +123,7 @@ public class ImageManager {
         }
     }
 
-    // ── Internal loading / scaling ──────────────────────────────
-
+    // Internal loading / scaling
     private static BufferedImage loadRaw(String resourcePath) {
         BufferedImage cached = RAW_CACHE.get(resourcePath);
         if (cached != null) return cached;

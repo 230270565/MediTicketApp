@@ -1,5 +1,14 @@
+/*
+ ClinicStaffApiClient.java
+
+ API client for the Clinic Staff endpoints
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//MATTHEW BARRON - 230398863
 import com.fasterxml.jackson.core.type.TypeReference;
 import za.ac.cput.model.domain.ClinicStaff;
 

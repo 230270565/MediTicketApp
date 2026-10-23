@@ -1,3 +1,20 @@
+/*
+ NotificationCard.java
+
+ Card that shows one notification with its read state
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 22nd October 2026
+*/
+
 package za.ac.cput.ui.layout;
 
 import za.ac.cput.model.domain.Notification;
@@ -12,13 +29,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * One row in a Notifications list, shared by the patient, doctor and nurse pages.
- *
- * Unread: teal bar on the left, light teal background, bold message and a "New" pill.
- * Read:   plain white card, regular-weight message.
- * Top line: stage pill (what it is about, e.g. "Ticket · Open"), time, channel.
- */
+// One notification in the list. Unread ones get the teal bar, the bold text and a New pill.
 public class NotificationCard extends JPanel {
 
     private static final Color UNREAD_TINT = new Color(0xF1F8F8);
@@ -34,7 +45,7 @@ public class NotificationCard extends JPanel {
         setAlignmentX(Component.LEFT_ALIGNMENT);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // ── meta row: [stage pill] time · channel                [New] ──
+        // Top row: stage pill, time and channel, with the New pill on the right
         JPanel meta = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         meta.setOpaque(false);
         String[] stage = stage(n.getRelatedStatus());
@@ -88,8 +99,7 @@ public class NotificationCard extends JPanel {
         super.paintComponent(g);
     }
 
-    // ── helpers shared with the details dialog ──
-
+    // helpers shared with the details dialog
     /** {label, colour-status} for a stage code, or null when the notification has none (older rows). */
     public static String[] stage(String code) {
         if (code == null) return null;

@@ -1,3 +1,20 @@
+/*
+ AppDialog.java
+
+ Dialog for app
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.theme;
 
 import javax.swing.*;
@@ -7,11 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * Branded replacement for raw JOptionPane dialogs. Used anywhere the app
- * needs to show a success/error/info confirmation to the user, styled
- * consistently with AppTheme rather than the platform's default look.
- */
+// Our own message dialog so popups match the app instead of JOptionPane.
 public class AppDialog {
 
     public enum Type { SUCCESS, ERROR, INFO }
@@ -58,8 +71,7 @@ public class AppDialog {
         okButton.addActionListener(e -> dialog.dispose());
         content.add(okButton);
 
-        // Keyboard support — Enter and Esc both dismiss, matching how
-        // every native OK/confirm dialog behaves.
+        // Enter and Esc close it.
         dialog.getRootPane().setDefaultButton(okButton);
         dialog.getRootPane().registerKeyboardAction(
                 (ActionEvent e) -> dialog.dispose(),
@@ -67,8 +79,7 @@ public class AppDialog {
                 JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
-        // Draggable — undecorated dialogs have no title bar to grab, so
-        // without this a mispositioned dialog is unmovable.
+        // No title bar, so let the user drag it.
         DragHandler drag = new DragHandler(dialog);
         content.addMouseListener(drag);
         content.addMouseMotionListener(drag);

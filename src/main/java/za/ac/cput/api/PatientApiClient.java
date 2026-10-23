@@ -1,5 +1,14 @@
+/*
+ PatientApiClient.java
+
+ API client for the Patient endpoints
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//AIDAN BARENDS - 230155639
 import com.fasterxml.jackson.core.type.TypeReference;
 import za.ac.cput.model.domain.Patient;
 

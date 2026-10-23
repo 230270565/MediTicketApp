@@ -1,5 +1,14 @@
+/*
+ NurseDashboard.java
+
+ Nurse dashboard
+
+ Author: Matthew Barron (230398863)
+
+ Date: 20th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.nurse;
-//MATTHEW BARRON - 230398863
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.AppFrame;
@@ -16,11 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * Shell for the NURSE role, mirroring AdminDashboard: a role-agnostic
- * Sidebar on the left, a TopHeader and a CardLayout page container on the
- * right, with logout clearing both the auth token and the session.
- */
+// Nurse dashboard: sidebar, header and the pages. Same layout as the admin one.
 public class NurseDashboard extends JPanel {
 
     private final AppFrame appFrame;
@@ -56,8 +61,7 @@ public class NurseDashboard extends JPanel {
 
         sidebar = new Sidebar(navItems, PAGE_HOME, this::showPage, this::onLogout);
 
-        // Header must exist before registerPages(), since ProfilePage needs
-        // topHeader::refreshProfile to notify it of name/avatar changes.
+        // Make the header first, ProfilePage needs it to update the name and avatar.
         topHeader = new TopHeader(() -> {
             sidebar.select(PAGE_PROFILE);
             showPage(PAGE_PROFILE);

@@ -1,12 +1,13 @@
 /*
  MedicalAidDialog.java
 
- MedicalAidDialog  — component.
+ Patient dialog for medical aid
 
- Author: Abdullahi Farah (230971091)
+ Author: Abdullahi Raage Farah (230971091)
 
- Date: 23 August 2026
+ Date: 23rd August 2026
 */
+
 package za.ac.cput.ui.patient.components;
 
 import za.ac.cput.model.domain.Payment;
@@ -17,7 +18,6 @@ import za.ac.cput.ui.theme.FontManager;
 import javax.swing.*;
 import java.awt.*;
 import java.math.RoundingMode;
-
 
 public class MedicalAidDialog {
 
@@ -94,7 +94,6 @@ public class MedicalAidDialog {
                 errorLabel.setText("Please select your medical aid scheme.");
                 return;
             }
-
 
             String member = memberNumber.getText().replaceAll("\\s", "");
             if (member.isEmpty()) {

@@ -1,3 +1,20 @@
+/*
+ LiveUpdater.java
+
+ Reloads the open page and the badges every few seconds
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 22nd October 2026
+*/
+
 package za.ac.cput.ui.layout;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -9,17 +26,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * Keeps a dashboard current without logging out and back in.
- *
- *  - pageOpened(): reloads a page the moment the user opens it.
- *  - every REFRESH_MS: reloads the page on screen and the unread notification
- *    count (sidebar badge + header bell). Skipped while a dialog is open, so a
- *    form someone is filling in never redraws underneath them.
- *
- * This is polling, not server push: simple, no backend change, and on localhost
- * a refresh costs a few milliseconds. stop() must be called on logout.
- */
+// Keeps the dashboard up to date without logging out.
+// Reloads a page when it is opened, then every few seconds along with the badges.
+// It skips a refresh while a dialog is open. Call stop() on logout.
 public class LiveUpdater {
 
     private static final int REFRESH_MS = 10_000;

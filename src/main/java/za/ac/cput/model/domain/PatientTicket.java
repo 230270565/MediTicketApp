@@ -1,3 +1,13 @@
+/*
+ PatientTicket.java
+
+ Frontend model for PatientTicket
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.domain;
 
 import java.time.LocalDateTime;

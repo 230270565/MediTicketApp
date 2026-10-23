@@ -1,3 +1,20 @@
+/*
+ RowClickHelper.java
+
+ Opens a details dialog when a table row is clicked
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.layout;
 
 import za.ac.cput.ui.theme.AppTheme;
@@ -8,15 +25,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.IntConsumer;
 
-/**
- * Makes a JTable's rows click-to-open instead of relying on a dedicated
- * Action column. Replaces the ActionCellRenderer/ActionCellEditor pattern
- * used throughout the app — CTAs move into the dialog the row opens,
- * conditionally rendered there based on status, rather than living in a
- * table cell. Attach once per table; the id column still exists in the
- * model (usually hidden or reused for sorting) so the click handler can
- * look up which row's object to load.
- */
+// Clicking a table row opens its details dialog, so we don't need an Action column.
+// The id column stays in the model so we know which row was clicked.
 public class RowClickHelper {
 
     public static void makeRowsClickable(JTable table, int idColumn, IntConsumer onRowClicked) {
@@ -35,8 +45,7 @@ public class RowClickHelper {
             }
         });
 
-        // Hover highlight — reuses the same tint Sidebar rows already use,
-        // so the interaction language matches across the app.
+        // Hover colour, same as the sidebar.
         table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             private int lastHoverRow = -1;
 

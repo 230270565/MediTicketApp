@@ -1,3 +1,20 @@
+/*
+ AppTheme.java
+
+ Colours, spacing and shared styling used across the app
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.theme;
 
 import com.formdev.flatlaf.FlatLightLaf;
@@ -6,24 +23,16 @@ import com.formdev.flatlaf.util.SystemInfo;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Central theme definition for MediTicket.
- * Sets up FlatLaf as the base L&F, then layers on custom colors, fonts,
- * and component defaults so every screen pulls from one source of truth
- * instead of hardcoding hex values / font sizes locally.
- */
+// App theme. Sets up FlatLaf and keeps the colours, fonts and sizes in one place.
 public class AppTheme {
 
-    // ── Brand palette ──────────────────────────────────────────
-    // Clinical-but-warm: deep teal as the primary action color,
-    // soft blue-greys for structure, a clear status set for
-    // ConfirmationStatus / StatusType / PaymentStatus badges.
+    // Colours
 
-    public static final Color PRIMARY        = new Color(0x0E7C86); // deep teal — primary buttons, active nav
+    public static final Color PRIMARY        = new Color(0x0E7C86); // teal: main buttons and the active menu item
     public static final Color PRIMARY_DARK   = new Color(0x0A5C63);
     public static final Color PRIMARY_LIGHT  = new Color(0xE3F2F3);
 
-    public static final Color ACCENT         = new Color(0xF2A65A); // warm amber — secondary CTAs, highlights
+    public static final Color ACCENT         = new Color(0xF2A65A); // amber: secondary buttons and highlights
     public static final Color ACCENT_DARK    = new Color(0xD98C3D);
 
     public static final Color BACKGROUND     = new Color(0xF7F9FA); // app background
@@ -38,8 +47,7 @@ public class AppTheme {
     public static final Color TEXT_MUTED     = new Color(0x93A2A5);
     public static final Color TEXT_ON_PRIMARY = Color.WHITE;
 
-    // Status colors — reused across ConfirmationStatus, StatusType,
-    // PaymentStatus, NotificationStatus badges/pills throughout the UI
+    // Status colours used by the pills and badges
     public static final Color STATUS_SUCCESS      = new Color(0x2E9E5B); // CONFIRMED, PAID, RESOLVED, SENT
     public static final Color STATUS_SUCCESS_BG   = new Color(0xE5F5EA);
 
@@ -55,7 +63,7 @@ public class AppTheme {
     public static final Color STATUS_NEUTRAL        = new Color(0x6C7A7D); // CLOSED, REFUNDED
     public static final Color STATUS_NEUTRAL_BG     = new Color(0xEAECEC);
 
-    // ── Spacing scale ──────────────────────────────────────────
+    // Spacing scale
     public static final int SPACE_XS  = 4;
     public static final int SPACE_SM  = 8;
     public static final int SPACE_MD  = 16;
@@ -63,16 +71,14 @@ public class AppTheme {
     public static final int SPACE_XL  = 32;
     public static final int SPACE_XXL = 48;
 
-    // ── Corner radii (used with FlatLaf's arc-based rounding) ──
+    // Corner radii (used with FlatLaf's arc-based rounding)
     public static final int RADIUS_SM = 6;
     public static final int RADIUS_MD = 10;
     public static final int RADIUS_LG = 16;
 
     private static boolean initialized = false;
 
-    /**
-     * Call once, at application startup, before any window is created.
-     */
+    // Call once when the app starts.
     public static void initialize() {
         if (initialized) return;
 
@@ -94,16 +100,14 @@ public class AppTheme {
         UIManager.put("@foreground", toHex(TEXT_PRIMARY));
         UIManager.put("@accentColor", toHex(PRIMARY));
 
-        // Global arc/rounding — gives buttons, text fields, combo boxes
-        // the soft rounded-card look consistent with the FlatLaf ethos
+        // Rounded corners
         UIManager.put("Button.arc", RADIUS_MD);
         UIManager.put("Component.arc", RADIUS_SM);
         UIManager.put("ProgressBar.arc", RADIUS_SM);
         UIManager.put("TextComponent.arc", RADIUS_SM);
         UIManager.put("CheckBox.arc", 4);
 
-        // Typography — Inter for UI text, Playfair Display reserved for
-        // display/headline moments (see FontManager.headlineFont())
+        // Fonts: Inter for text, Playfair Display for headings
         Font bodyFont = FontManager.bodyFont(Font.PLAIN, 14);
         UIManager.put("defaultFont", bodyFont);
         UIManager.put("Label.font", bodyFont);
@@ -149,10 +153,7 @@ public class AppTheme {
         UIManager.put("TabbedPane.underlineColor", PRIMARY);
     }
 
-    // ── Status → color helpers ─────────────────────────────────
-    // Central mapping so any page rendering a ConfirmationStatus /
-    // StatusType / PaymentStatus / NotificationStatus string gets a
-    // consistent badge color without re-deriving the mapping per screen.
+    // Status colours, so every page uses the same colour for a status
 
     public static Color statusColor(String status) {
         if (status == null) return STATUS_NEUTRAL;
@@ -178,10 +179,7 @@ public class AppTheme {
         };
     }
 
-    /**
-     * Readable label for an enum value shown to users:
-     * IN_PROGRESS -> "In progress", MEDICAL_AID -> "Medical aid", EFT stays "EFT".
-     */
+    // IN_PROGRESS -> In progress, MEDICAL_AID -> Medical aid, EFT stays EFT.
     public static String label(String value) {
         if (value == null || value.isBlank()) return "\u2014";
         if (value.equals("EFT") || value.equals("SMS")) return value;
@@ -189,8 +187,7 @@ public class AppTheme {
         return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
     }
 
-    // ── Shared control styles ──────────────────────────────────
-    // One place for the look of filter pills and text links, so every page matches.
+    // Shared styles for filter buttons and links
 
     /** Filter pill: teal fill when selected, quiet outline otherwise. */
     public static void styleFilterButton(AbstractButton btn, boolean selected) {

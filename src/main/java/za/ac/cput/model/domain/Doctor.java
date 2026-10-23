@@ -1,3 +1,13 @@
+/*
+ Doctor.java
+
+ Frontend model for Doctor
+
+ Author: Jaden Clayton Abrahams (222206721)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.domain;
 
 public class Doctor extends User {

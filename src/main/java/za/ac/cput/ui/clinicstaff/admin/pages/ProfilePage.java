@@ -1,5 +1,14 @@
+/*
+ ProfilePage.java
+
+ Admin Profile page
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 15th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.admin.pages;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.ClinicStaff;
@@ -16,7 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.time.LocalDate;
-
 
 public class ProfilePage extends JPanel {
 
@@ -161,8 +169,7 @@ public class ProfilePage extends JPanel {
                 BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG)
         ));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
-        // No width cap — BoxLayout stretches this to the full content width,
-        // which is what closes the empty gap on the right.
+        // No max width so the card fills the page.
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JLabel sectionTitle = new JLabel("Personal Information");
@@ -254,7 +261,6 @@ public class ProfilePage extends JPanel {
         block.add(valueComp);
         return block;
     }
-
 
     private void loadProfile() {
         int userId = SessionManager.getInstance().getUserId();
@@ -372,7 +378,7 @@ public class ProfilePage extends JPanel {
                     SessionManager.getInstance().setFullName(
                             firstNameField.getField().getText().trim() + " " + lastNameField.getField().getText().trim());
                     loadProfile();
-                    onProfileUpdated.run(); // NEW — tell the header to refresh name/avatar
+                    onProfileUpdated.run(); // Tell the header to refresh name/avatar
                 } else {
                     AppDialog.show(ProfilePage.this, "Unable to Save",
                             result.getMessage() != null ? result.getMessage() : "Something went wrong.", AppDialog.Type.ERROR);

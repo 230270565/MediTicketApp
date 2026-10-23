@@ -1,11 +1,13 @@
 /*
  PaymentReceiptDialog.java
 
- Patient Payment Receipt Dialog — read-only view for a PAID or REFUNDED
- payment. No actions available; this is purely informational.
+ Patient Payment Receipt Dialog - read-only view for a PAID or REFUNDED
 
- Author: Abdullahi Farah (230971091)
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 25th August 2026
 */
+
 package za.ac.cput.ui.patient.components;
 
 import za.ac.cput.model.domain.Appointment;
@@ -152,8 +154,6 @@ public class PaymentReceiptDialog {
         wrapper.add(close);
         return wrapper;
     }
-
-
 
     private static String statusLabel(String status) {
         if ("PAID".equals(status)) return "Paid in full";

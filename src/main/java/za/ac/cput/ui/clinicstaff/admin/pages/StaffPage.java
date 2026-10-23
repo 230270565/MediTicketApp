@@ -1,3 +1,13 @@
+/*
+ StaffPage.java
+
+ Admin Staff page
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
 import za.ac.cput.ui.layout.Refreshable;
@@ -19,9 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 public class StaffPage extends JPanel implements Refreshable {
-
 
     private static class StaffRow {
         String name, role, email, phone, extra, status;
@@ -181,7 +189,6 @@ public class StaffPage extends JPanel implements Refreshable {
         }
     }
 
-
     private void loadData() {
         allRows.clear();
 
@@ -244,7 +251,7 @@ public class StaffPage extends JPanel implements Refreshable {
                     row.phone != null ? row.phone : "—",
                     row.extra != null && !row.extra.isBlank() ? row.extra : "—",
                     row.status != null ? row.status : "—",
-                    i // hidden — index into the filtered list, used by onRowClicked
+                    i // hidden, row index used by onRowClicked
             });
         }
     }

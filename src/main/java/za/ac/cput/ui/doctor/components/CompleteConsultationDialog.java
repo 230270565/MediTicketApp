@@ -1,3 +1,13 @@
+/*
+ CompleteConsultationDialog.java
+
+ Doctor dialog for complete consultation
+
+ Author: Jaden Clayton Abrahams (222206721)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.doctor.components;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -9,7 +19,6 @@ import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
 import java.awt.*;
-
 
 public class CompleteConsultationDialog {
 

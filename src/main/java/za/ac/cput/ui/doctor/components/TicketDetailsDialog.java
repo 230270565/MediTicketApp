@@ -1,3 +1,13 @@
+/*
+ TicketDetailsDialog.java
+
+ Doctor dialog for ticket details
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.doctor.components;
 
 import za.ac.cput.ui.layout.StatusTimeline;
@@ -13,7 +23,6 @@ import za.ac.cput.ui.theme.FontManager;
 import javax.swing.*;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
-
 
 public class TicketDetailsDialog {
 
@@ -119,7 +128,6 @@ public class TicketDetailsDialog {
     private static String statusBadgeText(String status) {
         return status != null ? status.replace("_", " ") : "—";
     }
-
 
     private static JComponent fieldBlock(String label, String value) {
         JLabel valueLabel = new JLabel(value);

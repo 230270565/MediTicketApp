@@ -1,3 +1,13 @@
+/*
+ TicketDetailsDialog.java
+
+ Dialog for ticket details
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.ui.layout.StatusTimeline;
@@ -16,7 +26,6 @@ import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
-
 
 public class TicketDetailsDialog {
 
@@ -144,7 +153,6 @@ public class TicketDetailsDialog {
         dialog.setVisible(true);
     }
 
-
     private static void markAsPaid(JDialog dialog, Component parent, Payment payment, Runnable onChanged) {
         int confirm = JOptionPane.showConfirmDialog(dialog,
                 "Confirm that payment of R" + formatAmount(payment.getPaymentAmount())
@@ -192,7 +200,6 @@ public class TicketDetailsDialog {
     private static String statusBadgeText(String status) {
         return status != null ? status.replace("_", " ") : "—";
     }
-
 
     private static JComponent fieldBlock(String label, String value) {
         JLabel valueLabel = new JLabel(value);

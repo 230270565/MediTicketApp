@@ -1,5 +1,14 @@
+/*
+ DoctorDashboard.java
+
+ Doctor dashboard
+
+ Author: Jaden Clayton Abrahams (222206721)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.doctor;
-//JADEN CLAYTON ABRAHAMS - 222206721
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.AppFrame;

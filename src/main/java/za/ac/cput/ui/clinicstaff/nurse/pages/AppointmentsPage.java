@@ -1,5 +1,14 @@
+/*
+ AppointmentsPage.java
+
+ Nurse Appointments page
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.nurse.pages;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
@@ -21,15 +30,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Nurse's Appointments page — functionally identical to
- * clinicstaff.admin.pages.AppointmentsPage. Nurses share full approve/reject
- * capability with admin per the business flow, so this reuses the shared
- * ApproveAppointmentDialog and AppointmentDetailsDialog from
- * za.ac.cput.ui.clinicstaff.components directly, rather than duplicating
- * them — those dialogs derive staffId from SessionManager, which resolves
- * correctly for either role.
- */
+// Nurse appointments page. Same as the admin one and uses the shared dialogs.
 public class AppointmentsPage extends JPanel implements Refreshable {
 
     private SummaryCard pendingCard, confirmedCard, completedCard, cancelledCard;
@@ -202,8 +203,7 @@ public class AppointmentsPage extends JPanel implements Refreshable {
         });
     }
 
-    // ── Data loading ──────────────────────────────────────────────
-
+    // Data loading
     private void loadData() {
         BaseApiClient.ApiResult<List<Appointment>> result = ApiClientProvider.getInstance().appointments().getAll();
         allAppointments = result.isSuccess() ? result.getData() : List.of();
@@ -340,7 +340,7 @@ public class AppointmentsPage extends JPanel implements Refreshable {
                 "Reject Appointment", JOptionPane.PLAIN_MESSAGE);
 
         if (reason == null) {
-            return; // user cancelled — do nothing
+            return; // user cancelled
         }
         if (reason.isBlank()) {
             AppDialog.show(this, "Reason Required",

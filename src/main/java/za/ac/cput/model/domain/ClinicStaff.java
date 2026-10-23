@@ -1,3 +1,13 @@
+/*
+ ClinicStaff.java
+
+ Frontend model for ClinicStaff
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.domain;
 
 public class ClinicStaff extends User {

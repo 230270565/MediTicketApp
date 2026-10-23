@@ -1,3 +1,13 @@
+/*
+ ReportsPage.java
+
+ Admin Reports page
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
 import za.ac.cput.ui.layout.Refreshable;
@@ -15,7 +25,6 @@ import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-
 
 public class ReportsPage extends JPanel implements Refreshable {
 
@@ -165,7 +174,6 @@ public class ReportsPage extends JPanel implements Refreshable {
         section.revalidate();
         section.repaint();
     }
-
 
     private void loadData() {
         BaseApiClient.ApiResult<List<Appointment>> apptResult = ApiClientProvider.getInstance().appointments().getAll();

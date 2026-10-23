@@ -1,5 +1,14 @@
+/*
+ PatientDashboard.java
+
+ Patient dashboard
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.patient;
-//AIDAN BARENDS - 230155639
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.AppFrame;
@@ -73,7 +82,6 @@ public class PatientDashboard extends JPanel {
         showPage(PAGE_HOME);
         live.start();
     }
-
 
     private void registerPages() {
         pageContainer.add(new DashboardPage(this::navigateTo), PAGE_HOME);

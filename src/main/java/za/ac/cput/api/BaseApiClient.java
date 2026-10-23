@@ -1,3 +1,20 @@
+/*
+ BaseApiClient.java
+
+ API client for the Base endpoints
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -13,10 +30,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 
-/**
- * Generic API client for all backend controllers.
- * Handles JSON serialization, auth headers, and common HTTP patterns.
- */
+// Shared client for the backend. Handles the JSON, the token header and the HTTP calls.
 public class BaseApiClient {
 
     private static final String BASE_URL = "http://localhost:8080/api";
@@ -37,7 +51,7 @@ public class BaseApiClient {
         this.objectMapper.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
     }
 
-    /** Set JWT token after login — all subsequent requests include it */
+    /** Set the token after login so every request sends it. */
     public void setAuthToken(String token) {
         this.authToken = token;
     }
@@ -46,8 +60,7 @@ public class BaseApiClient {
         this.authToken = null;
     }
 
-    // ── Generic CRUD Operations ───────────────────────────────
-
+    // Generic CRUD Operations
     public <T> ApiResult<T> get(String endpoint, Class<T> responseClass) {
         try {
             HttpRequest request = buildRequest(endpoint).GET().build();
@@ -100,11 +113,7 @@ public class BaseApiClient {
         }
     }
 
-    /**
-     * NEW — required for endpoints like PatientTicketController#progressStatus,
-     * which is mapped with @PatchMapping. java.net.http.HttpRequest has no
-     * built-in .PATCH() like it does .PUT()/.POST(), so it's built via .method().
-     */
+    // HttpRequest has no PATCH() method, so it is built with method("PATCH").
     public <T> ApiResult<T> patch(String endpoint, Object body, Class<T> responseClass) {
         try {
             String json = objectMapper.writeValueAsString(body);
@@ -132,8 +141,7 @@ public class BaseApiClient {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────
-
+    // Helpers
     private HttpRequest.Builder buildRequest(String endpoint) {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + endpoint))
@@ -163,7 +171,7 @@ public class BaseApiClient {
         return ApiResult.failure(response.statusCode(), response.body());
     }
 
-    // ── ApiResult (moved here so all clients share it) ────────
+    // ApiResult, shared by all the clients
 
     public static class ApiResult<T> {
         private final boolean success;

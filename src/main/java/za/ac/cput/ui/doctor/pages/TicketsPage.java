@@ -1,5 +1,14 @@
+/*
+ TicketsPage.java
+
+ Doctor Tickets page
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.doctor.pages;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
@@ -18,7 +27,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 public class TicketsPage extends JPanel implements Refreshable {
 
@@ -185,7 +193,6 @@ public class TicketsPage extends JPanel implements Refreshable {
             TicketDetailsDialog.show(this, ticket, this::loadData);
         }
     }
-
 
     private void loadData() {
         int doctorId = SessionManager.getInstance().getUserId();

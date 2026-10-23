@@ -1,12 +1,20 @@
+/*
+ AppointmentDetailsDialog.java
+
+ Doctor dialog for appointment details
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.doctor.components;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.model.domain.Appointment;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
 import java.awt.*;
-
 
 public class AppointmentDetailsDialog {
 

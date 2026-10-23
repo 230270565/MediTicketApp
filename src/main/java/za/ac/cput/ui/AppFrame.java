@@ -1,3 +1,20 @@
+/*
+ AppFrame.java
+
+ Main window that switches between the login screens and the dashboards
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui;
 
 import za.ac.cput.ui.auth.*;
@@ -6,7 +23,6 @@ import za.ac.cput.ui.theme.ImageManager;
 
 import javax.swing.*;
 import java.awt.*;
-
 
 public class AppFrame extends JFrame {
 
@@ -26,7 +42,6 @@ public class AppFrame extends JFrame {
     public static final String SCREEN_PATIENT_DASHBOARD = "PATIENT_DASHBOARD";
     public static final String SCREEN_NURSE_DASHBOARD = "NURSE_DASHBOARD";
     public static final String SCREEN_SIGNUP_VERIFY = "SIGNUP_VERIFY";
-
 
     private final CardLayout cardLayout;
     private final JPanel contentContainer;
@@ -58,7 +73,6 @@ public class AppFrame extends JFrame {
         showScreen(SCREEN_LOGIN);
     }
 
-
     private void registerScreens() {
         contentContainer.add(new LoginPanel(this), SCREEN_LOGIN);
         contentContainer.add(new PatientSignupPanel(this), SCREEN_PATIENT_SIGNUP);
@@ -82,7 +96,6 @@ public class AppFrame extends JFrame {
         contentContainer.add(signupVerifyCodePanel, SCREEN_SIGNUP_VERIFY);
     }
 
-
     public void showScreen(String screenKey) {
         cardLayout.show(contentContainer, screenKey);
     }
@@ -92,7 +105,6 @@ public class AppFrame extends JFrame {
     public VerifyResetCodePanel getVerifyResetCodePanel() { return verifyResetCodePanel; }
     public NewPasswordPanel getNewPasswordPanel() { return newPasswordPanel; }
     public SignupVerifyCodePanel getSignupVerifyCodePanel() { return signupVerifyCodePanel; }
-
 
     public void addScreen(String screenKey, JComponent screen) {
         contentContainer.add(screen, screenKey);

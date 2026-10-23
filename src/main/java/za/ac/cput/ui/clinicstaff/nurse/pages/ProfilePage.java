@@ -1,5 +1,14 @@
+/*
+ ProfilePage.java
+
+ Nurse Profile page
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.nurse.pages;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.ClinicStaff;
@@ -17,15 +26,8 @@ import java.awt.*;
 import java.io.File;
 import java.time.LocalDate;
 
-/**
- * Admin/Nurse profile — ClinicStaff only. Identical in behavior to
- * clinicstaff.admin.pages.ProfilePage; duplicated per-role rather than
- * shared, per project convention of keeping role dashboards independent.
- * Email and staffRole are intentionally locked: email is the unique login
- * identifier tied to verification/invite tokens, and staffRole is an
- * admin-at-invite-time decision, never self-editable. Avatar is stored
- * locally on disk (AvatarManager), entirely outside the database.
- */
+// Staff profile page. Email and role can't be changed.
+// The photo is saved on this PC only (AvatarManager).
 public class ProfilePage extends JPanel {
 
     private ClinicStaff currentStaff;

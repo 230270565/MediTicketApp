@@ -1,3 +1,13 @@
+/*
+ DashboardPage.java
+
+ Patient Dashboard page
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.patient.pages;
 
 import za.ac.cput.ui.layout.Refreshable;
@@ -70,8 +80,6 @@ public class DashboardPage extends JPanel implements Refreshable {
         loadData();
     }
 
-
-
     private JComponent buildGreeting() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -80,7 +88,6 @@ public class DashboardPage extends JPanel implements Refreshable {
 
         SessionManager session = SessionManager.getInstance();
         String firstName = extractFirstName(session.getFullName());
-
 
         // No wave emoji: Swing can't draw colour emoji, so it wrapped onto its own line as a box.
         JLabel greeting = new JLabel(greetingForTime() + ", " + firstName);
@@ -133,8 +140,6 @@ public class DashboardPage extends JPanel implements Refreshable {
         return fullName.split(" ")[0];
     }
 
-
-
     private JComponent buildSummaryCards() {
         JPanel grid = new JPanel(new GridLayout(1, 4, AppTheme.SPACE_MD, 0));
         grid.setOpaque(false);
@@ -153,8 +158,6 @@ public class DashboardPage extends JPanel implements Refreshable {
         return grid;
     }
 
-
-
     private JComponent buildTwoColumnSection() {
         JPanel columns = new JPanel(new GridLayout(1, 2, AppTheme.SPACE_LG, 0));
         columns.setOpaque(false);
@@ -165,7 +168,6 @@ public class DashboardPage extends JPanel implements Refreshable {
         columns.add(buildNextAppointmentCard());
         return columns;
     }
-
 
     private JComponent buildTimelineCard() {
         ElevatedCard card = new ElevatedCard(AppTheme.RADIUS_LG);
@@ -304,7 +306,6 @@ public class DashboardPage extends JPanel implements Refreshable {
         return rail;
     }
 
-
     private JComponent buildNextAppointmentCard() {
         ElevatedCard card = new ElevatedCard(AppTheme.RADIUS_LG);
         card.setLayout(new BorderLayout());
@@ -432,8 +433,6 @@ public class DashboardPage extends JPanel implements Refreshable {
         return chip;
     }
 
-
-
     private void loadData() {
         int patientId = SessionManager.getInstance().getUserId();
 
@@ -457,7 +456,6 @@ public class DashboardPage extends JPanel implements Refreshable {
         if (notifResult.isSuccess()) {
             notificationCount = (int) notifResult.getData().stream().filter(n -> n.isUnread()).count();
         }
-
 
         int outstandingPaymentCount = 0;
         var paymentResult = ApiClientProvider.getInstance().payments().getAll();

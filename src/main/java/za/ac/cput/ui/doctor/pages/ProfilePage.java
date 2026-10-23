@@ -1,5 +1,14 @@
+/*
+ ProfilePage.java
+
+ Doctor Profile page
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.doctor.pages;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Doctor;
@@ -16,7 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.time.LocalDate;
-
 
 public class ProfilePage extends JPanel {
 
@@ -62,7 +70,6 @@ public class ProfilePage extends JPanel {
         loadProfile();
     }
 
-
     private JComponent buildHeader() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
@@ -105,7 +112,6 @@ public class ProfilePage extends JPanel {
         panel.add(buttonWrapper, BorderLayout.EAST);
         return panel;
     }
-
 
     private JComponent buildAvatarSection() {
         JPanel panel = new JPanel();
@@ -155,7 +161,6 @@ public class ProfilePage extends JPanel {
         }
     }
 
-
     private JPanel buildFormCard() {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
@@ -186,7 +191,6 @@ public class ProfilePage extends JPanel {
         card.add(row(phoneField, dobField, specialtyField));
         card.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
 
-
         JLabel accountInfoTitle = new JLabel("Account Information");
         accountInfoTitle.setFont(FontManager.bodyFont(Font.BOLD, 13));
         accountInfoTitle.setForeground(AppTheme.TEXT_SECONDARY);
@@ -216,7 +220,6 @@ public class ProfilePage extends JPanel {
         return card;
     }
 
-
     private JPanel row(JComponent... fields) {
         JPanel row = new JPanel(new GridLayout(1, fields.length, AppTheme.SPACE_MD, 0));
         row.setOpaque(false);
@@ -225,7 +228,6 @@ public class ProfilePage extends JPanel {
         for (JComponent f : fields) row.add(f);
         return row;
     }
-
 
     private JComponent readOnlyField(String label, boolean isEmail) {
         JPanel block = new JPanel();
@@ -259,8 +261,6 @@ public class ProfilePage extends JPanel {
         block.add(valueComp);
         return block;
     }
-
-
 
     private void loadProfile() {
         int userId = SessionManager.getInstance().getUserId();

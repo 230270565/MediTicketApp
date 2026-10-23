@@ -1,3 +1,13 @@
+/*
+ CreateTicketDialog.java
+
+ Dialog for create ticket
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -11,7 +21,6 @@ import za.ac.cput.ui.theme.FontManager;
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDateTime;
-
 
 public class CreateTicketDialog {
 

@@ -1,3 +1,13 @@
+/*
+ SignupVerifyCodePanel.java
+
+ Signup Verify Code screen
+
+ Author: Aidan Barends (230255639)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.auth;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -12,11 +22,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * Mirrors VerifyResetCodePanel's exact pattern, for signup verification
- * instead of password reset — same 6-digit-code UX, different endpoint
- * underneath (AuthApiClient#verify instead of #verifyResetCode).
- */
+// Enter the 6-digit code from the signup email. Works the same as VerifyResetCodePanel.
 public class SignupVerifyCodePanel extends JPanel {
 
     private final AppFrame appFrame;

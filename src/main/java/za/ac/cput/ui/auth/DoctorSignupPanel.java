@@ -1,3 +1,13 @@
+/*
+ DoctorSignupPanel.java
+
+ Doctor Signup screen
+
+ Author: Jaden Clayton Abrahams (222206721)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.auth;
 
 import za.ac.cput.api.ApiClientProvider;

@@ -1,5 +1,14 @@
+/*
+ AuthApiClient.java
+
+ API client for the Auth endpoints
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//JOSHUA REID ADAMS - 230317693
 import com.fasterxml.jackson.core.type.TypeReference;
 import za.ac.cput.model.auth.*;
 
@@ -15,9 +24,7 @@ public class AuthApiClient {
         this.client = client;
     }
 
-    // ==========================================
     // Public / Patient Authentication Endpoints
-    // ==========================================
 
     public BaseApiClient.ApiResult<AuthResponse> login(LoginRequest request) {
         return client.post("/auth/login", request, AuthResponse.class);
@@ -45,9 +52,7 @@ public class AuthApiClient {
         return client.post("/auth/refresh", request, AuthResponse.class);
     }
 
-    // ==========================================
     // Employee Onboarding / Invite Endpoints
-    // ==========================================
 
     public BaseApiClient.ApiResult<String> inviteEmployee(EmployeeInviteRequest request) {
         return client.post("/auth/employee/invite", request, String.class);
@@ -66,15 +71,13 @@ public class AuthApiClient {
         return client.post("/auth/employee/signup/clinicstaff", request, String.class);
     }
 
-    // ==========================================
     // Self-Service Access Request & Admin Review
-    // ==========================================
 
     public BaseApiClient.ApiResult<String> requestAccess(EmployeeAccessRequestSubmission request) {
         return client.post("/auth/employee/request-access", request, String.class);
     }
 
-    /** Matches AuthController#listAccessRequests — GET /employee/access-requests?status= (defaults to PENDING server-side) */
+    /** GET /employee/access-requests?status= (PENDING by default) */
     public BaseApiClient.ApiResult<List<EmployeeAccessRequest>> getAccessRequests(String status) {
         String url = "/auth/employee/access-requests";
         if (status != null && !status.isBlank()) {
@@ -95,9 +98,7 @@ public class AuthApiClient {
         return client.post(url, null, String.class);
     }
 
-    // ==========================================
     // Forgot Password Flow
-    // ==========================================
 
     public BaseApiClient.ApiResult<String> forgotPassword(ForgotPasswordRequest request) {
         return client.post("/auth/forgot-password", request, String.class);

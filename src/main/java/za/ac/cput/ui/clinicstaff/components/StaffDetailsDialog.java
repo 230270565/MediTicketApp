@@ -1,3 +1,13 @@
+/*
+ StaffDetailsDialog.java
+
+ Dialog for staff details
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.model.domain.ClinicStaff;
@@ -7,7 +17,6 @@ import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
 import java.awt.*;
-
 
 public class StaffDetailsDialog {
 

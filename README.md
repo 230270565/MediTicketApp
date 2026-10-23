@@ -167,11 +167,11 @@ All API calls run on a `SwingWorker` thread to keep the UI responsive.
 |------------------------|----------------|----------------------------------|
 | Joshua Reid Adams      | 230317693      | PatientTicket UI, Auth (Team Lead) |
 | Abdullahi Raage Farah  | 230971091      | Payments UI, TicketStatus UI     |
-| Aidan Barends          | 230155639      | Patient UI, Registration         |
+| Aidan Barends          | 230255639      | Patient UI, Registration         |
 | Jaden Clayton Abrahams | 222206721      | Doctor UI, Doctor Dashboard      |
 | Joshua Peter Bonzet    | 221312536      | Appointments UI                  |
 | Matthew Barron         | 230398863      | Clinic Staff UI, Admin Dashboard |
-| Raul Jaaim Everts      | 230270564      | Notifications UI                 |
+| Raul Jaaim Everts      | 230270565      | Notifications UI                 |
 
 ---
 

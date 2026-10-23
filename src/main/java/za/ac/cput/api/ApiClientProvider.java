@@ -1,11 +1,15 @@
+/*
+ ApiClientProvider.java
+
+ Creates the API clients and shares them across the app
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//JOSHUA REID ADAMS - 230317693
-/**
- * Single shared entry point for all API access.
- * One BaseApiClient instance is created for the whole app lifecycle,
- * so the JWT set after login is visible to every screen/dashboard
- * that pulls a client from here.
- */
+// One shared client for the whole app, so the token set at login works on every screen.
 public class ApiClientProvider {
 
     private static final ApiClientProvider INSTANCE = new ApiClientProvider();

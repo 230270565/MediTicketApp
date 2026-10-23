@@ -1,5 +1,14 @@
+/*
+ PatientsPage.java
+
+ Nurse Patients page
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.nurse.pages;
-//AIDAN BARENDS - 230155639
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
@@ -20,7 +29,6 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 public class PatientsPage extends JPanel implements Refreshable {
 
@@ -215,7 +223,6 @@ public class PatientsPage extends JPanel implements Refreshable {
         PatientDetailsDialog.show(this, patient, this::loadData);
     }
 
-
     private void loadData() {
         BaseApiClient.ApiResult<List<Patient>> result = ApiClientProvider.getInstance().patients().getAll();
         allPatients = result.isSuccess() ? result.getData() : List.of();
@@ -276,7 +283,6 @@ public class PatientsPage extends JPanel implements Refreshable {
     private Patient findPatientById(int patientId) {
         return allPatients.stream().filter(p -> p.getUserId() == patientId).findFirst().orElse(null);
     }
-
 
     private void onClearInactive() {
         List<Patient> inactive = allPatients.stream()

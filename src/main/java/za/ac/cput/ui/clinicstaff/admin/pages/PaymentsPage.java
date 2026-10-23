@@ -1,5 +1,14 @@
+/*
+ PaymentsPage.java
+
+ Admin Payments page
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.admin.pages;
-//ABDULLAHI RAAGE FARAH - 230971091
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
@@ -20,7 +29,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 public class PaymentsPage extends JPanel implements Refreshable {
 
@@ -183,7 +191,6 @@ public class PaymentsPage extends JPanel implements Refreshable {
             PaymentDetailsDialog.show(this, payment, this::loadData);
         }
     }
-
 
     private void loadData() {
         BaseApiClient.ApiResult<List<Payment>> result = ApiClientProvider.getInstance().payments().getAll();

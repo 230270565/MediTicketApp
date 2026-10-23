@@ -1,5 +1,14 @@
+/*
+ PaymentDetailsDialog.java
+
+ Dialog for payment details
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
-//ABDULLAHI RAAGE FARAH - 230971091
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
@@ -11,7 +20,6 @@ import za.ac.cput.ui.theme.FontManager;
 import javax.swing.*;
 import java.awt.*;
 import java.math.RoundingMode;
-
 
 public class PaymentDetailsDialog {
 
@@ -89,7 +97,6 @@ public class PaymentDetailsDialog {
         dialog.setContentPane(content);
         dialog.setVisible(true);
     }
-
 
     private static void markAsPaid(JDialog dialog, Component parent, Payment payment, Runnable onChanged) {
         String amount = payment.getPaymentAmount().setScale(2, RoundingMode.HALF_UP).toString();

@@ -1,3 +1,20 @@
+/*
+ AvatarManager.java
+
+ Draws the user avatar with their initials
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 15th August 2026
+*/
+
 package za.ac.cput.ui.theme;
 
 import javax.imageio.ImageIO;
@@ -11,14 +28,7 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Stores profile photos on local disk, keyed by userId, entirely outside
- * the database — no backend endpoint, no entity field. Lives at
- * ~/.mediticket/avatars/{userId}.png. Persists across app restarts on
- * this machine only; does not sync across devices. Chosen deliberately
- * over a DB/blob-storage approach to avoid a schema migration + upload
- * endpoint for a purely cosmetic feature.
- */
+// Saves profile photos on this PC in ~/.mediticket/avatars, not in the database.
 public class AvatarManager {
 
     private static final Logger LOGGER = Logger.getLogger(AvatarManager.class.getName());

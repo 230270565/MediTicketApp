@@ -1,3 +1,13 @@
+/*
+ Notification.java
+
+ Frontend model for Notification
+
+ Author: Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.domain;
 
 import java.time.LocalDateTime;

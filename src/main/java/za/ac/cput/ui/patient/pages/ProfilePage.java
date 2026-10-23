@@ -1,5 +1,14 @@
+/*
+ ProfilePage.java
+
+ Patient Profile page
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.patient.pages;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Name;
@@ -16,7 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.time.LocalDate;
-
 
 public class ProfilePage extends JPanel {
 
@@ -253,8 +261,6 @@ public class ProfilePage extends JPanel {
         block.add(valueComp);
         return block;
     }
-
-
 
     private void loadProfile() {
         int userId = SessionManager.getInstance().getUserId();

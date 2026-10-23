@@ -1,3 +1,13 @@
+/*
+ Payment.java
+
+ Frontend model for Payment
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.domain;
 
 import java.math.BigDecimal;

@@ -1,3 +1,13 @@
+/*
+ InviteEmployeeDialog.java
+
+ Dialog for invite employee
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.api.ApiClientProvider;

@@ -1,3 +1,13 @@
+/*
+ NotificationDetailsDialog.java
+
+ Dialog for notification details
+
+ Author: Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.model.domain.Notification;

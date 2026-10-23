@@ -1,3 +1,13 @@
+/*
+ DoctorSignupRequest.java
+
+ Doctor Signup Request DTO
+
+ Author: Jaden Clayton Abrahams (222206721)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.auth;
 
 import java.time.LocalDate;

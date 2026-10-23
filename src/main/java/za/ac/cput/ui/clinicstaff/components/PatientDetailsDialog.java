@@ -1,3 +1,13 @@
+/*
+ PatientDetailsDialog.java
+
+ Dialog for patient details
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -9,7 +19,6 @@ import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
 import java.awt.*;
-
 
 public class PatientDetailsDialog {
 

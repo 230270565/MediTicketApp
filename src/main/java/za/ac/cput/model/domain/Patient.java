@@ -1,3 +1,13 @@
+/*
+ Patient.java
+
+ Frontend model for Patient
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.domain;
 
 import java.time.LocalDate;

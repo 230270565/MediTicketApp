@@ -1,3 +1,13 @@
+/*
+ AuthResponse.java
+
+ Auth Response DTO
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.auth;
 
 public class AuthResponse {

@@ -1,12 +1,20 @@
+/*
+ PatientDetailsDialog.java
+
+ Doctor dialog for patient details
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.doctor.components;
-//AIDAN BARENDS - 230155639
 import za.ac.cput.model.domain.Patient;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
 import java.awt.*;
-
 
 public class PatientDetailsDialog {
 

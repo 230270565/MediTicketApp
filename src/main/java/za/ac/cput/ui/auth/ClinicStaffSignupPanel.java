@@ -1,3 +1,13 @@
+/*
+ ClinicStaffSignupPanel.java
+
+ Clinic Staff Signup screen
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.auth;
 
 import za.ac.cput.api.ApiClientProvider;

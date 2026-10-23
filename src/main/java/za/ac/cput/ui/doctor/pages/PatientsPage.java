@@ -1,5 +1,14 @@
+/*
+ PatientsPage.java
+
+ Doctor Patients page
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.doctor.pages;
-//AIDAN BARENDS - 230155639
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
@@ -23,7 +32,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 public class PatientsPage extends JPanel implements Refreshable {
 
@@ -161,8 +169,7 @@ public class PatientsPage extends JPanel implements Refreshable {
         PatientDetailsDialog.show(this, patient);
     }
 
-    // ── Data loading ──────────────────────────────────────────────
-
+    // Data loading
     private void loadData() {
         int doctorId = SessionManager.getInstance().getUserId();
         BaseApiClient.ApiResult<List<Appointment>> result =

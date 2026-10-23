@@ -1,10 +1,26 @@
+/*
+ ElevatedCard.java
+
+ Card panel with a soft shadow
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 25th August 2026
+*/
+
 package za.ac.cput.ui.patient.components;
 
 import za.ac.cput.ui.theme.AppTheme;
 
 import javax.swing.*;
 import java.awt.*;
-
 
 public class ElevatedCard extends JPanel {
 
@@ -21,8 +37,7 @@ public class ElevatedCard extends JPanel {
         this.radius = radius;
         setOpaque(false);
         setBackground(AppTheme.SURFACE);
-        // Reserve room on the bottom/right for the drop shadow so it never
-        // gets clipped by the component's own bounds.
+        // Leave space for the shadow.
         setBorder(BorderFactory.createEmptyBorder(0, 0, SHADOW_SIZE + 1, SHADOW_SIZE + 1));
     }
 
@@ -43,8 +58,7 @@ public class ElevatedCard extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Soft shadow: a handful of stacked, increasingly-transparent
-        // rounded rects offset slightly down-right of the card.
+        // Shadow made from a few see-through rounded rectangles.
         for (int i = SHADOW_SIZE; i >= 1; i--) {
             int alpha = 3 + (SHADOW_SIZE - i) * 2;
             g2.setColor(new Color(20, 30, 32, alpha));

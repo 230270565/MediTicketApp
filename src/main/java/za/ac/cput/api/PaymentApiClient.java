@@ -1,5 +1,14 @@
+/*
+ PaymentApiClient.java
+
+ API client for the Payment endpoints
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//ABDULLAHI RAAGE FARAH - 230971091
 import com.fasterxml.jackson.core.type.TypeReference;
 import za.ac.cput.model.domain.Payment;
 

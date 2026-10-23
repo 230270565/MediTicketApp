@@ -1,3 +1,13 @@
+/*
+ DashboardPage.java
+
+ Doctor Dashboard page
+
+ Author: Jaden Clayton Abrahams (222206721)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.doctor.pages;
 
 import za.ac.cput.ui.layout.Refreshable;
@@ -24,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 public class DashboardPage extends JPanel implements Refreshable {
 
@@ -151,14 +160,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         return root;
     }
 
-    /**
-     * Bento-style overview grid, mirroring the nurse dashboard's layout but
-     * re-mapped to a doctor's data: Today's Schedule is the big tile (a
-     * doctor's equivalent of the nurse's work queue), Ticket Queue is a
-     * medium tile (kept larger than a shortcut since doctors track it
-     * closely), and Recent Activity / Consultation Progress / Patient
-     * Directory round out the grid.
-     */
+    // Doctor dashboard grid. Same layout as the nurse one with the doctor's schedule and tickets.
     private JComponent buildBentoGrid() {
         JPanel grid = new JPanel(new GridBagLayout());
         grid.setOpaque(false);
@@ -429,10 +431,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         return tipCard;
     }
 
-    /**
-     * Shortcut tile into the Patient directory, matching the nurse
-     * dashboard's pattern of surfacing navigation, not just read-only data.
-     */
+    // Shortcut to the Patients page.
     private JComponent buildPatientDirectoryTile() {
         JPanel card = cardPanel();
         card.setLayout(new BorderLayout(AppTheme.SPACE_MD, 0));

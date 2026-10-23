@@ -1,3 +1,20 @@
+/*
+ Icons.java
+
+ Line icons drawn in code so they show on every machine
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 22nd October 2026
+*/
+
 package za.ac.cput.ui.theme;
 
 import javax.swing.*;
@@ -6,15 +23,8 @@ import java.awt.geom.*;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/**
- * Vector line icons drawn with Java2D (Lucide-style: 24x24 grid, 2px round strokes).
- *
- * Why not emoji: Swing on Windows cannot draw colour emoji, so every emoji icon
- * rendered as a black box or a faint glyph. These icons are plain shapes, so they
- * look the same on every machine, scale to any size, and take any colour.
- *
- * Usage:  label.setIcon(Icons.get(Icons.CALENDAR, 18, AppTheme.PRIMARY));
- */
+// Line icons drawn in code. Emoji showed as boxes on Windows, these look the same everywhere.
+// Use Icons.get(Icons.CALENDAR, 18, AppTheme.PRIMARY).
 public final class Icons {
 
     public static final String HOME = "home";
@@ -45,10 +55,7 @@ public final class Icons {
         return new LineIcon(painter, size, color);
     }
 
-    /**
-     * Maps the emoji the dashboards used to pass to {@link za.ac.cput.ui.layout.NavItem}
-     * onto vector icons, so existing NavItem lists keep working unchanged.
-     */
+    // Turns the old emoji menu icons into drawn icons.
     public static String nameForEmoji(String emoji) {
         if (emoji == null) return INFO;
         return switch (emoji) {
@@ -68,11 +75,7 @@ public final class Icons {
         };
     }
 
-    /**
-     * Splits a leading emoji off a label ("\uD83D\uDCB3 2 payments" -> {CARD, "2 payments"}),
-     * so text that used to start with an emoji can show a vector icon instead.
-     * Returns {null, text} when there is no leading emoji.
-     */
+    // Takes an emoji off the start of a label so we can show an icon instead.
     public static String[] splitLeadingEmoji(String text) {
         if (text == null || text.length() < 2 || !Character.isHighSurrogate(text.charAt(0))) {
             return new String[]{null, text};
@@ -83,8 +86,7 @@ public final class Icons {
         return new String[]{INFO.equals(name) ? null : name, rest};
     }
 
-    // ── Painters: each draws on a 24x24 grid with the stroke already set ──
-
+    // Painters: each draws on a 24x24 grid with the stroke already set
     private static final Map<String, Consumer<Graphics2D>> PAINTERS = Map.ofEntries(
             Map.entry(HOME, g -> {
                 g.draw(path(3, 10, 12, 3, 21, 10));

@@ -1,5 +1,14 @@
+/*
+ TicketsPage.java
+
+ Nurse Tickets page
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.nurse.pages;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.api.ApiClientProvider;
@@ -21,14 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Nurse's Tickets page — functionally identical to
- * clinicstaff.admin.pages.TicketsPage. Reuses the shared TicketDetailsDialog
- * and SummaryCard from za.ac.cput.ui.clinicstaff.components.
- * Row-click pattern: clicking anywhere on a row opens TicketDetailsDialog,
- * which already owns the Generate Payment / Mark as Paid CTAs conditionally
- * based on status.
- */
+// Nurse tickets page. Same as the admin one. Clicking a row opens TicketDetailsDialog.
 public class TicketsPage extends JPanel implements Refreshable {
 
     private SummaryCard openCard, inProgressCard, resolvedCard, closedCard;
@@ -212,8 +214,7 @@ public class TicketsPage extends JPanel implements Refreshable {
         TicketDetailsDialog.show(this, ticket, payment, this::loadData);
     }
 
-    // ── Data loading ──────────────────────────────────────────────
-
+    // Data loading
     private void loadData() {
         BaseApiClient.ApiResult<List<PatientTicket>> ticketResult =
                 ApiClientProvider.getInstance().patientTickets().getAll();
@@ -246,8 +247,7 @@ public class TicketsPage extends JPanel implements Refreshable {
     private void updateNeedsAttention() {
         needsAttentionSection.removeAll();
 
-        // Resolved tickets that still have no payment request (a generated, unpaid payment
-        // is the patient's turn, not the nurse's).
+        // Resolved tickets that don't have a payment yet.
         long readyForPayment = allTickets.stream()
                 .filter(t -> "RESOLVED".equals(t.getCurrentStatus()))
                 .filter(t -> t.getAppointment() == null

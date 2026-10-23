@@ -1,3 +1,13 @@
+/*
+ SessionManager.java
+
+ Keeps the logged in user and their token
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.session;
 
 public class SessionManager {
@@ -8,7 +18,7 @@ public class SessionManager {
     private String refreshToken;
     private int userId;
     private String userType;   // PATIENT, DOCTOR, CLINIC_STAFF
-    private String staffRole;  // NURSE, ADMIN — only when userType == CLINIC_STAFF
+    private String staffRole;  // NURSE or ADMIN, only for CLINIC_STAFF
     private String email;
     private String fullName;
 

@@ -1,3 +1,13 @@
+/*
+ Appointment.java
+
+ Frontend model for Appointment
+
+ Author: Joshua Peter Bonzet (221312536)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.domain;
 
 import java.time.LocalDate;

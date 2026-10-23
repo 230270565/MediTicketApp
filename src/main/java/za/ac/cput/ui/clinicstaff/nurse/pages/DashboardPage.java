@@ -1,3 +1,13 @@
+/*
+ DashboardPage.java
+
+ Nurse Dashboard page
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.nurse.pages;
 
 import za.ac.cput.ui.layout.Refreshable;
@@ -28,7 +38,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
 
 public class DashboardPage extends JPanel implements Refreshable {
 
@@ -149,15 +158,8 @@ public class DashboardPage extends JPanel implements Refreshable {
         return root;
     }
 
-    /**
-     * Bento-style overview grid: a 4-column GridBagLayout mixing the four
-     * SummaryCards with variable-sized tiles (work queue is the big tile,
-     * everything else is a supporting tile) so the dashboard reads as one
-     * connected surface instead of a stack of full-width blocks. Two of the
-     * tiles (Today's Appointments, Patient Directory) are shortcuts into
-     * other parts of the app, built from data already fetched by refresh()
-     * -- no extra API calls.
-     */
+    // Dashboard grid with the summary cards, the work queue and the shortcut tiles.
+    // Uses the data refresh() already loaded.
     private JComponent buildBentoGrid() {
         JPanel grid = new JPanel(new GridBagLayout());
         grid.setOpaque(false);
@@ -204,11 +206,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         return grid;
     }
 
-    /**
-     * GridBagLayout sizes columns from each child's preferred width, so a tile with
-     * long text made its column (and the Payments card above it) three times wider.
-     * Reporting a preferred width of 0 lets the equal weights decide: four equal columns.
-     */
+    // Gives the tile a preferred width of 0 so all four columns stay the same width.
     private static JComponent equalWidth(JComponent child) {
         JPanel wrap = new JPanel(new BorderLayout()) {
             @Override public Dimension getPreferredSize() {
@@ -394,11 +392,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         return tipCard;
     }
 
-    /**
-     * New bento tile: surfaces today's appointment count (already fetched
-     * for the triage-progress calculation, previously not shown directly)
-     * with a one-tap shortcut into the full Appointments page.
-     */
+    // Today's appointment count with a shortcut to the Appointments page.
     private JComponent buildTodaysAppointmentsTile() {
         JPanel card = cardPanel();
         card.setLayout(new BorderLayout(0, AppTheme.SPACE_SM));
@@ -438,11 +432,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         return card;
     }
 
-    /**
-     * New bento tile: a static shortcut into the Patient directory so the
-     * dashboard doubles as a jumping-off point into other parts of the app,
-     * not just a read-only summary.
-     */
+    // Shortcut to the Patients page.
     private JComponent buildPatientDirectoryTile() {
         JPanel card = cardPanel();
         card.setLayout(new BorderLayout(0, AppTheme.SPACE_SM));

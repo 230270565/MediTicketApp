@@ -1,5 +1,14 @@
+/*
+ NotificationApiClient.java
+
+ API client for the Notification endpoints
+
+ Author: Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//RAUL JAAIM EVERTS - 230270565
 import com.fasterxml.jackson.core.type.TypeReference;
 import za.ac.cput.model.domain.Notification;
 

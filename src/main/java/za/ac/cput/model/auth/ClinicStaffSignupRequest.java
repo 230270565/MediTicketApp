@@ -1,3 +1,13 @@
+/*
+ ClinicStaffSignupRequest.java
+
+ Clinic Staff Signup Request DTO
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.auth;
 
 import java.time.LocalDate;
@@ -12,8 +22,7 @@ public class ClinicStaffSignupRequest {
     private String password;
     private LocalDate dob;
     private String department;
-    // staffRole intentionally NOT here — it's decided at invite time by an
-    // ADMIN and pulled from the signed invite token, not chosen by the invitee.
+    // No staffRole here. The admin picks it when sending the invite.
 
     // Required no-arg constructor for Jackson deserialization
     public ClinicStaffSignupRequest() {}

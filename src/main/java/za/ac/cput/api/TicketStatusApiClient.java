@@ -1,5 +1,14 @@
+/*
+ TicketStatusApiClient.java
+
+ API client for the Ticket Status endpoints
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//JOSHUA REID ADAMS - 230317693
 import com.fasterxml.jackson.core.type.TypeReference;
 import za.ac.cput.model.domain.TicketStatus;
 

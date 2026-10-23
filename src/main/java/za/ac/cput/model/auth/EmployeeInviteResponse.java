@@ -1,3 +1,13 @@
+/*
+ EmployeeInviteResponse.java
+
+ Employee Invite Response DTO
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.auth;
 
 /*import za.ac.cput.domain.enums.StaffRole;

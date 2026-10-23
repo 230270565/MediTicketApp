@@ -1,5 +1,14 @@
+/*
+ AdminDashboard.java
+
+ Admin dashboard
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.admin;
-//JOSHUA REID ADAMS - 230317693
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.AppFrame;
@@ -56,7 +65,6 @@ public class AdminDashboard extends JPanel {
         );
 
         sidebar = new Sidebar(navItems, PAGE_HOME, this::showPage, this::onLogout);
-
 
         topHeader = new TopHeader(() -> {
             sidebar.select(PAGE_PROFILE);

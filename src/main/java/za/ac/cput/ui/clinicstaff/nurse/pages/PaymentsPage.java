@@ -2,12 +2,14 @@
  PaymentsPage.java
 
  Nurse Payments Page - Monitor patient payments, track outstanding
- balances, and confirm in-person settlements.
 
- Author: Abdullahi Raage Farah (230971091) and Joshua Reid Adams (230317693)
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
 
  Date: 24th August 2026
 */
+
 package za.ac.cput.ui.clinicstaff.nurse.pages;
 //ABDULLAHI RAAGE FARAH - 230971091
 import za.ac.cput.ui.layout.Refreshable;
@@ -31,12 +33,8 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Row click opens PaymentDetailsDialog, which is read-only for EFT
- * payments (settled entirely by the patient) but exposes a "Mark as Paid"
- * action for CASH, CARD, and MEDICAL_AID — those are collected in person
- * by staff. No Action column — RowClickHelper handles the click.
- */
+// Nurse payments page. Clicking a row opens the payment.
+// EFT is paid by the patient, the other methods can be marked as paid here.
 public class PaymentsPage extends JPanel implements Refreshable {
 
     private SummaryCard pendingCard, paidCard, refundedCard, failedCard;
@@ -199,8 +197,7 @@ public class PaymentsPage extends JPanel implements Refreshable {
         }
     }
 
-    // ── Data loading ──────────────────────────────────────────────
-
+    // Data loading
     private void loadData() {
         BaseApiClient.ApiResult<List<Payment>> result = ApiClientProvider.getInstance().payments().getAll();
         allPayments = result.isSuccess() ? result.getData() : List.of();

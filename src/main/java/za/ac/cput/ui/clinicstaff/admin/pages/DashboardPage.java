@@ -1,3 +1,13 @@
+/*
+ DashboardPage.java
+
+ Admin Dashboard page
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
 import za.ac.cput.ui.layout.Refreshable;
@@ -216,8 +226,6 @@ public class DashboardPage extends JPanel implements Refreshable {
         section.repaint();
     }
 
-
-
     private void loadData() {
         List<Doctor> doctors = List.of();
         List<ClinicStaff> staff = List.of();
@@ -252,8 +260,7 @@ public class DashboardPage extends JPanel implements Refreshable {
 
     }
 
-    // Loads this admin's notifications once: the unread count for the card,
-    // the latest three for Recent Activity (it used to stay on "Loading..." for ever).
+    // Loads the notifications once for the unread count and the latest three for Recent Activity.
     private String loadNotificationCount() {
         int userId = SessionManager.getInstance().getUserId();
         BaseApiClient.ApiResult<List<za.ac.cput.model.domain.Notification>> result =

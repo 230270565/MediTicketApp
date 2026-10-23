@@ -1,3 +1,20 @@
+/*
+ LabeledPasswordField.java
+
+ Password field with a label above it
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.auth.components;
 
 import za.ac.cput.ui.theme.AppTheme;
@@ -20,7 +37,7 @@ public class LabeledPasswordField extends JPanel {
         setLayout(new BorderLayout(0, 6));
         setOpaque(false);
 
-        // ===== Top row: label + forgot password link =====
+        // Top row: label + forgot password link
         JPanel topRow = new JPanel(new BorderLayout());
         topRow.setOpaque(false);
 
@@ -35,13 +52,13 @@ public class LabeledPasswordField extends JPanel {
         topRow.add(label, BorderLayout.WEST);
         topRow.add(forgotLink, BorderLayout.EAST);
 
-        // ===== Password field =====
+        // Password field
         field.setFont(FontManager.bodyFont(Font.PLAIN, 14));
         field.setPreferredSize(new Dimension(0, 42));
         field.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
         defaultEchoChar = field.getEchoChar();
 
-        // ===== Show/Hide toggle button =====
+        // Show/Hide toggle button
         toggle = new JButton("Show");
         toggle.setFont(FontManager.bodyFont(Font.PLAIN, 12));
         toggle.setForeground(AppTheme.TEXT_SECONDARY);
@@ -55,7 +72,7 @@ public class LabeledPasswordField extends JPanel {
             toggle.setText(visible ? "Hide" : "Show");
         });
 
-        // ===== Field row: password field + toggle button, bordered together =====
+        // Field row: password field + toggle button, bordered together
         JPanel fieldRow = new JPanel(new BorderLayout());
         fieldRow.setOpaque(false);
         fieldRow.setBorder(BorderFactory.createCompoundBorder(

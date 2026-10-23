@@ -1,5 +1,14 @@
+/*
+ PatientSignupPanel.java
+
+ Patient Signup screen
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.auth;
-//AIDAN BARENDS - 230155639
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.auth.PatientSignupRequest;
@@ -170,7 +179,6 @@ public class PatientSignupPanel extends JPanel {
         return tagline;
     }
 
-
     private void onCreateAccount() {
         String pwd = new String(password.getPassword());
         String confirmPwd = new String(confirmPassword.getPassword());
@@ -213,13 +221,13 @@ public class PatientSignupPanel extends JPanel {
                 new SwingWorker<>() {
                     @Override
                     protected BaseApiClient.ApiResult<String> doInBackground() {
-                        // Runs off the EDT — safe to block here.
+                        // Runs in the background, so it can wait for the backend.
                         return ApiClientProvider.getInstance().auth().signup(request);
                     }
 
                     @Override
                     protected void done() {
-                        // Back on the EDT automatically — safe to touch Swing components here.
+                        // Back on the Swing thread, so we can update the screen.
                         createAccount.setEnabled(true);
                         createAccount.setText("Create Account");
 

@@ -1,3 +1,20 @@
+/*
+ StatusPill.java
+
+ Coloured status pill used in tables and dialogs
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 22nd October 2026
+*/
+
 package za.ac.cput.ui.layout;
 
 import za.ac.cput.ui.theme.AppTheme;
@@ -8,14 +25,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 
-/**
- * Rounded status pill: tinted background + coloured text with a readable label
- * ("IN_PROGRESS" shows as "In progress"). Colours come from
- * AppTheme.statusColor()/statusBackground(), so every page agrees.
- *
- * Use it as a label:          new StatusPill("PAID")
- * or on a table column:       StatusPill.install(table)   // every column named "Status"
- */
+// Coloured status pill, e.g. IN_PROGRESS shows as In progress.
+// Use new StatusPill("PAID") or StatusPill.install(table) for Status columns.
 public class StatusPill extends JLabel {
 
     private Color pillBackground;
@@ -55,10 +66,7 @@ public class StatusPill extends JLabel {
         return getPreferredSize();
     }
 
-    /**
-     * Puts a pill renderer on every column headed "Status", and a readable-label
-     * renderer on "Method" columns (MEDICAL_AID -> Medical aid). Safe on any table.
-     */
+    // Adds pills to Status columns and readable labels to Method columns.
     public static void install(JTable table) {
         for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
             TableColumn column = table.getColumnModel().getColumn(i);
@@ -95,10 +103,7 @@ public class StatusPill extends JLabel {
         }
     }
 
-    /**
-     * Table cell renderer: paints the pill directly. (JTable paints renderers without
-     * laying them out, so a panel-with-a-pill renderer would draw at zero size.)
-     */
+    // Paints the pill itself, a panel inside a table cell drew at zero size.
     private static final class Renderer extends DefaultTableCellRenderer {
         private Color rowBg = AppTheme.SURFACE;
         private Color pillBg = AppTheme.STATUS_NEUTRAL_BG;

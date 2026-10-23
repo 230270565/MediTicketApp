@@ -1,3 +1,13 @@
+/*
+ RequestSubmittedPanel.java
+
+ Request Submitted screen
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.auth;
 
 import za.ac.cput.ui.AppFrame;

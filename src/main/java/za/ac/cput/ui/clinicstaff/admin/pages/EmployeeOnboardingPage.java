@@ -1,3 +1,13 @@
+/*
+ EmployeeOnboardingPage.java
+
+ Admin Employee Onboarding page
+
+ Author: Matthew Barron (230398863)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.admin.pages;
 
 import za.ac.cput.ui.layout.Refreshable;
@@ -181,8 +191,7 @@ public class EmployeeOnboardingPage extends JPanel implements Refreshable {
         requestsTable.setShowGrid(false);
         requestsTable.setIntercellSpacing(new Dimension(0, 0));
 
-        // Hide the id column from view — it stays in the model so
-        // RowClickHelper can look up which request a row represents.
+        // Hide the id column. It stays in the model so the row click knows which request it is.
         TableColumn idColumn = requestsTable.getColumnModel().getColumn(ID_COLUMN);
         requestsTable.getColumnModel().removeColumn(idColumn);
 
@@ -215,7 +224,6 @@ public class EmployeeOnboardingPage extends JPanel implements Refreshable {
             });
         }
     }
-
 
     private void openDetails(int requestId) {
         currentRequests.stream()

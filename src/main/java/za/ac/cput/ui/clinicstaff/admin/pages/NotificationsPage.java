@@ -1,5 +1,14 @@
+/*
+ NotificationsPage.java
+
+ Admin Notifications page
+
+ Author: Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.clinicstaff.admin.pages;
-//Raul Everts 230270565
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
@@ -16,13 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Admin notification history page.
- * Displays notification history and allows the admin to send
- * a new notification/feedback message from a popup.
- * Notifications are tied to a PatientTicket and its Appointment.
- * The ticket selector includes ALL tickets, including closed tickets.
- */
+// Admin notifications page. Shows the history and lets the admin send feedback about any ticket.
 public class NotificationsPage extends JPanel implements Refreshable {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM, HH:mm");
@@ -66,7 +69,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
 
-        // ───────────────── Header ─────────────────
+        // Header
 
         JPanel header = new JPanel(new BorderLayout());
 
@@ -98,7 +101,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         header.add(titlePanel, BorderLayout.WEST);
 
-        // ───────────────── Send Feedback Button ─────────────────
+        // Send Feedback Button
 
         JButton sendFeedbackButton = new JButton("Send Feedback");
 
@@ -131,7 +134,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
 
-        // ───────────────── Filters ─────────────────
+        // Filters
 
         filterBarContainer = new JPanel(new BorderLayout());
 
@@ -147,7 +150,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
 
-        // ───────────────── History ─────────────────
+        // History
 
         historyList = new JPanel();
 
@@ -182,15 +185,11 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
             JButton btn = new JButton(f[1]);
 
-
             btn.setFocusPainted(false);
 
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
             AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
-
-
-
 
             btn.addActionListener(e -> {
 
@@ -385,13 +384,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
     // ══════════════════════════════ FEEDBACK POPUP ══════════════════════════════
 
-    /**
-     * Opens the page-level Send Feedback popup.
-     * Unlike the notification-details follow-up popup,
-     * the ticket is NOT locked to an existing notification.
-     * All tickets returned by patientTickets().getAll() are
-     * available, including closed tickets.
-     */
+    // Send Feedback popup. Any ticket can be picked, closed ones too.
     private void openFeedbackPopup() {
 
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Send Feedback", Dialog.ModalityType.APPLICATION_MODAL);
@@ -423,7 +416,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true), BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG)));
 
-        // ───────────────── Title ─────────────────
+        // Title
 
         JLabel title = new JLabel("Send Feedback");
 
@@ -625,7 +618,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
             String message = messageArea.getText().trim();
 
-            // ───────── Validation ─────────
+            // Validation
 
             if (ticket == null || ticket.getAppointment() == null) {
 
@@ -659,7 +652,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
             Appointment appt = ticket.getAppointment();
 
-            // ───────── Build Notification ─────────
+            // Build Notification
 
             Notification notification = new Notification();
 
@@ -688,7 +681,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
                 notification.setClinicStaff(appt.getStaff());
             }
 
-            // ───────── Send to Backend ─────────
+            // Send to Backend
 
             BaseApiClient.ApiResult<Notification> result = ApiClientProvider.getInstance().notifications().create(notification);
 
@@ -764,13 +757,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
     // ══════════════════════════════ FOLLOW-UP FROM DETAILS ══════════════════════════════
 
-    /**
-     * Existing Send Follow-Up functionality from the
-     * Notification Details popup.
-     * This remains separate from the page-level Send Feedback
-     * button because a follow-up is supposed to start with
-     * the notification's existing ticket.
-     */
+    // Follow-up from the details popup, starts on the same ticket as the notification.
     private void prefillFollowUp(Notification original) {
 
         if (original.getTicket() == null) {
@@ -831,7 +818,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(note);
 
-        // ───────────────── Ticket ─────────────────
+        // Ticket
 
         panel.add(fieldLabel("Ticket"));
 
@@ -871,7 +858,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
 
-        // ───────────────── Recipient ─────────────────
+        // Recipient
 
         panel.add(fieldLabel("Recipient"));
 
@@ -916,7 +903,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
 
-        // ───────────────── Type ─────────────────
+        // Type
 
         panel.add(fieldLabel("Notification Type"));
 
@@ -928,7 +915,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
 
-        // ───────────────── Message ─────────────────
+        // Message
 
         panel.add(fieldLabel("Message"));
 
@@ -949,7 +936,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(messageScroll);
 
-        // ───────────────── Error ─────────────────
+        // Error
 
         JLabel errorLabel = new JLabel(" ");
 
@@ -963,7 +950,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(errorLabel);
 
-        // ───────────────── Buttons ─────────────────
+        // Buttons
 
         JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, AppTheme.SPACE_SM, 0));
 

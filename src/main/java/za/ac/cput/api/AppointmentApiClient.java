@@ -1,5 +1,14 @@
+/*
+ AppointmentApiClient.java
+
+ API client for the Appointment endpoints
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//JOSHUA REID ADAMS - 230317693
 import com.fasterxml.jackson.core.type.TypeReference;
 import za.ac.cput.model.domain.Appointment;
 
@@ -57,23 +66,20 @@ public class AppointmentApiClient {
                 new TypeReference<List<Appointment>>() {});
     }
 
-    // ==========================================
-    // NEW — existed on AppointmentController but were missing here.
-    // approve/reject/complete are the core Nurse + Doctor workflow actions.
-    // ==========================================
+    // Approve and reject calls for the nurse and admin.
 
-    /** Matches AppointmentController#findByPatientUserId — GET /findByPatient/{patientId} */
+    /** GET /findByPatient/{patientId} */
     public BaseApiClient.ApiResult<List<Appointment>> findByPatient(int patientId) {
         return client.getList("/appointment/findByPatient/" + patientId, new TypeReference<List<Appointment>>() {});
     }
 
-    /** Matches AppointmentController#approve — POST /{appointmentId}/approve?doctorId=&staffId= */
+    /** POST /{appointmentId}/approve?doctorId=&staffId= */
     public BaseApiClient.ApiResult<Appointment> approve(int appointmentId, int doctorId, int staffId) {
         String endpoint = "/appointment/" + appointmentId + "/approve?doctorId=" + doctorId + "&staffId=" + staffId;
         return client.post(endpoint, null, Appointment.class);
     }
 
-    /** Matches AppointmentController#reject — POST /{appointmentId}/reject?staffId=&reason= */
+    /** POST /{appointmentId}/reject?staffId=&reason= */
     public BaseApiClient.ApiResult<Appointment> reject(int appointmentId, int staffId, String reason) {
         StringBuilder endpoint = new StringBuilder("/appointment/" + appointmentId + "/reject?staffId=" + staffId);
         if (reason != null && !reason.isBlank()) {
@@ -81,6 +87,5 @@ public class AppointmentApiClient {
         }
         return client.post(endpoint.toString(), null, Appointment.class);
     }
-
 
 }

@@ -1,3 +1,13 @@
+/*
+ StatusTimeline.java
+
+ Ticket history shown as a timeline in the ticket dialogs
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 22nd October 2026
+*/
+
 package za.ac.cput.ui.layout;
 
 import za.ac.cput.model.domain.TicketStatus;
@@ -9,14 +19,7 @@ import java.awt.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * Vertical ticket history used by the patient, doctor and staff ticket dialogs:
- * a dot per status joined by a line, a status pill, the date on the right and
- * any notes (diagnosis, closing reason) wrapped underneath.
- *
- * Replaces three copies of a history list whose long notes forced a horizontal
- * scrollbar and pushed the dates past the dialog's right edge.
- */
+// Ticket history as a timeline: a dot per status, the date and any notes underneath.
 public final class StatusTimeline {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm");
@@ -105,10 +108,7 @@ public final class StatusTimeline {
         return row;
     }
 
-    /**
-     * Dialog content panel that always matches the scroll pane's width, so content
-     * wraps instead of producing a horizontal scrollbar.
-     */
+    // Panel that keeps the scroll pane's width so text wraps.
     public static class WidthTrackingPanel extends JPanel implements Scrollable {
         @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
         @Override public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 16; }

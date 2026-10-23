@@ -1,3 +1,20 @@
+/*
+ Main.java
+
+ Starts the MediTicket desktop app
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput;
 
 import za.ac.cput.ui.AppFrame;
@@ -5,16 +22,7 @@ import za.ac.cput.ui.theme.AppTheme;
 
 import javax.swing.*;
 
-/**
- * Application entry point. Responsible only for:
- *   1. Initializing the theme (fonts, FlatLaf, UI defaults) before any
- *      Swing component is constructed — must happen first, or components
- *      built before this point won't pick up custom fonts/colors.
- *   2. Launching the single AppFrame on the Event Dispatch Thread.
- *
- * No business logic lives here — routing, auth, and screen composition
- * are AppFrame's responsibility.
- */
+// Starts the app. The theme has to load before any Swing component is made, then AppFrame opens.
 public class Main {
 
     public static void main(String[] args) {

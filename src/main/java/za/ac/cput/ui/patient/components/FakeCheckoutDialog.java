@@ -1,3 +1,13 @@
+/*
+ FakeCheckoutDialog.java
+
+ Patient dialog for fake checkout
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.patient.components;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -15,7 +25,6 @@ import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
 
 public class FakeCheckoutDialog {
 
@@ -217,7 +226,6 @@ public class FakeCheckoutDialog {
         return block;
     }
 
-
     private static class DigitFilter extends DocumentFilter {
 
         private final JTextField field;
@@ -307,8 +315,6 @@ public class FakeCheckoutDialog {
         }
         return null;
     }
-
-
 
     private static class CardBrandStrip extends JComponent {
 

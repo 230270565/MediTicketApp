@@ -1,3 +1,13 @@
+/*
+ TicketStatus.java
+
+ Frontend model for TicketStatus
+
+ Author: Abdullahi Raage Farah (230971091)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.model.domain;
 
 import java.time.LocalDateTime;
@@ -7,8 +17,6 @@ public class TicketStatus {
     private String statusType; // OPEN, IN_PROGRESS, RESOLVED, CLOSED, ESCALATED
     private LocalDateTime statusDate;
     private String notes;
-    // Note: backend TicketStatus.ticket is @JsonIgnore-worthy to avoid cycles —
-    // if it's not ignored server-side, watch for infinite recursion with PatientTicket.statusHistory.
 
     public TicketStatus() {}
 

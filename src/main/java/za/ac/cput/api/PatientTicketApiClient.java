@@ -1,5 +1,14 @@
+/*
+ PatientTicketApiClient.java
+
+ API client for the Patient Ticket endpoints
+
+ Author: Aidan Barends (230255639)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.api;
-//AIDAN BARENDS - 230155639
 import com.fasterxml.jackson.core.type.TypeReference;
 import za.ac.cput.model.domain.PatientTicket;
 
@@ -35,31 +44,19 @@ public class PatientTicketApiClient {
         return client.getList("/patienttickets/getall", new TypeReference<List<PatientTicket>>() {});
     }
 
-    // ==========================================
-    // NEW — existed on PatientTicketController but were missing here.
-    // progressStatus is the core ticket status-change action
-    // (nurse creates a ticket, doctor progresses it through StatusType).
-    // ==========================================
+    // Ticket status calls used by the doctor.
 
-    /** Matches PatientTicketController#findByCurrentStatus — GET /status/{status} */
+    /** GET /status/{status} */
     public BaseApiClient.ApiResult<List<PatientTicket>> findByCurrentStatus(String status) {
         return client.getList("/patienttickets/status/" + status, new TypeReference<List<PatientTicket>>() {});
     }
 
-    /** Matches PatientTicketController#findByPatientUserId — GET /patient/{patientId} */
+    /** GET /patient/{patientId} */
     public BaseApiClient.ApiResult<List<PatientTicket>> findByPatientUserId(int patientId) {
         return client.getList("/patienttickets/patient/" + patientId, new TypeReference<List<PatientTicket>>() {});
     }
 
-    /**
-     * Matches PatientTicketController#progressStatus —
-     * PATCH /{ticketId}/status?newStatus=&notes=
-     *
-     * newStatus is passed as a String matching StatusType's enum name
-     * (e.g. "OPEN", "IN_PROGRESS", "RESOLVED") — Spring converts it
-     * server-side, same pattern used by findByStatus() elsewhere in
-     * this client layer.
-     */
+    // PATCH /{ticketId}/status. newStatus is the StatusType name, e.g. IN_PROGRESS.
     public BaseApiClient.ApiResult<PatientTicket> progressStatus(int ticketId, String newStatus, String notes) {
         StringBuilder endpoint = new StringBuilder("/patienttickets/" + ticketId + "/status?newStatus=" + newStatus);
         if (notes != null && !notes.isBlank()) {
@@ -68,7 +65,7 @@ public class PatientTicketApiClient {
         return client.patch(endpoint.toString(), null, PatientTicket.class);
     }
 
-    /** Matches PatientTicketController#findByAppointmentId — GET /byappointment/{appointmentId} */
+    /** GET /byappointment/{appointmentId} */
     public BaseApiClient.ApiResult<PatientTicket> findByAppointmentId(int appointmentId) {
         return client.get("/patienttickets/byappointment/" + appointmentId, PatientTicket.class);
     }

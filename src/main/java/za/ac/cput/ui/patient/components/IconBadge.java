@@ -1,10 +1,26 @@
+/*
+ IconBadge.java
+
+ Small round badge that holds an icon
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 25th August 2026
+*/
+
 package za.ac.cput.ui.patient.components;
 
 import za.ac.cput.ui.theme.FontManager;
 
 import javax.swing.*;
 import java.awt.*;
-
 
 public class IconBadge extends JPanel {
 

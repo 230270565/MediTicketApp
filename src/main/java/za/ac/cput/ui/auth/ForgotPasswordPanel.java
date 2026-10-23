@@ -1,3 +1,13 @@
+/*
+ ForgotPasswordPanel.java
+
+ Forgot Password screen
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.auth;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -12,7 +22,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 
 public class ForgotPasswordPanel extends JPanel {
 

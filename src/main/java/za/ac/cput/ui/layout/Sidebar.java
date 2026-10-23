@@ -1,3 +1,20 @@
+/*
+ Sidebar.java
+
+ Side menu for each dashboard with unread badges
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.layout;
 
 import za.ac.cput.ui.theme.AppTheme;
@@ -14,12 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/**
- * Generic role-agnostic sidebar. Callers pass in their own NavItem list
- * (admin, nurse, doctor, patient all differ), so this component contains
- * no role-specific logic — just rendering, selection state, and click
- * dispatch back to whoever constructed it.
- */
+// Sidebar used by every role. Each dashboard passes in its own menu items.
 public class Sidebar extends JPanel {
 
     private static final int WIDTH = 240;
@@ -49,7 +61,7 @@ public class Sidebar extends JPanel {
         header.setBackground(AppTheme.SURFACE);
         header.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_MD, AppTheme.SPACE_LG, AppTheme.SPACE_MD));
 
-        // ===== Brand row: logo icon + "MediTicket" wordmark, side by side =====
+        // Brand row: logo icon + "MediTicket" wordmark, side by side
         JPanel brandRow = new JPanel();
         brandRow.setLayout(new BoxLayout(brandRow, BoxLayout.X_AXIS));
         brandRow.setOpaque(false);
@@ -115,8 +127,7 @@ public class Sidebar extends JPanel {
         row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
 
-        // Vector icon instead of an emoji glyph: Swing on Windows drew emoji as
-        // black boxes. Icons.nameForEmoji keeps the existing NavItem lists working.
+        // Emoji showed as boxes on Windows, so we draw the icon instead.
         String iconName = Icons.nameForEmoji(icon);
         JLabel iconLabel = new JLabel(Icons.get(iconName, 18, AppTheme.TEXT_SECONDARY));
         iconLabel.putClientProperty("iconName", iconName);

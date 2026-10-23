@@ -1,3 +1,13 @@
+/*
+ VerifyResetCodePanel.java
+
+ Verify Reset Code screen
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 18th August 2026
+*/
+
 package za.ac.cput.ui.auth;
 
 import za.ac.cput.api.ApiClientProvider;
@@ -13,7 +23,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 
 public class VerifyResetCodePanel extends JPanel {
 
@@ -149,9 +158,7 @@ public class VerifyResetCodePanel extends JPanel {
         }
     }
 
-    // Small helper since AppFrame doesn't currently expose a getter for
-    // NewPasswordPanel the way it does for VerifyResetCodePanel — see
-    // note in AppFrame wiring instructions below for the cleaner fix.
+    // AppFrame has no getter for NewPasswordPanel, so we look for it here.
     private Component findNewPasswordPanel() {
         return appFrame.getNewPasswordPanel();
     }

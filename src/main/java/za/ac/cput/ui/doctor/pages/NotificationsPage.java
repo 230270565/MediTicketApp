@@ -1,5 +1,14 @@
+/*
+ NotificationsPage.java
+
+ Doctor Notifications page
+
+ Author: Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.doctor.pages;
-//Raul Everts 230270565
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Notification;
@@ -16,11 +25,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Doctor notifications: newest first, unread ones highlighted.
- * Opening a notification marks it as read. LiveUpdater refreshes this page
- * every few seconds while it is visible, so new notifications appear on their own.
- */
+// Doctor notifications, newest first. Unread ones are highlighted and opening one marks it read.
 public class NotificationsPage extends JPanel implements Refreshable {
 
     private JPanel historyList;
@@ -98,8 +103,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         renderNotifications();
     }
 
-    // ── Filters: All / Unread / Read, each with its count ──
-
+    // Filters: All / Unread / Read, each with its count
     private void rebuildFilterBar() {
         long unread = allNotifications.stream().filter(Notification::isUnread).count();
         long read = allNotifications.size() - unread;

@@ -1,5 +1,14 @@
+/*
+ BookAppointmentDialog.java
+
+ Patient dialog for book appointment
+
+ Author: Joshua Reid Adams (230317693)
+
+ Date: 12th August 2026
+*/
+
 package za.ac.cput.ui.patient.components;
-//JOSHUA REID ADAMS - 230317693
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.components.TimePicker;
@@ -17,7 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
-
 
 public class BookAppointmentDialog {
 

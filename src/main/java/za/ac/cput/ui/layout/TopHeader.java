@@ -1,3 +1,20 @@
+/*
+ TopHeader.java
+
+ Header bar with the page title, notification bell and user
+
+ Authors:
+  Joshua Reid Adams (230317693)
+  Abdullahi Raage Farah (230971091)
+  Aidan Barends (230255639)
+  Jaden Clayton Abrahams (222206721)
+  Joshua Peter Bonzet (221312536)
+  Matthew Barron (230398863)
+  Raul Jaaim Everts (230270565)
+
+ Date: 11th August 2026
+*/
+
 package za.ac.cput.ui.layout;
 
 import za.ac.cput.session.SessionManager;
@@ -80,12 +97,7 @@ public class TopHeader extends JPanel {
         return panel;
     }
 
-    /**
-     * Re-reads SessionManager and AvatarManager and refreshes the name,
-     * role, and avatar shown here. Call this after a profile save or
-     * avatar change elsewhere in the app so the header stays in sync
-     * without needing SessionManager to broadcast changes itself.
-     */
+    // Updates the name, role and photo after the profile changes.
     public void refreshProfile() {
         SessionManager session = SessionManager.getInstance();
 
@@ -117,7 +129,7 @@ public class TopHeader extends JPanel {
 
     private Runnable onBellClick;
 
-    /** What clicking the bell does — each dashboard opens its Notifications page. */
+    /** What the bell does. Each dashboard opens its Notifications page. */
     public void setOnBellClick(Runnable onBellClick) {
         this.onBellClick = onBellClick;
     }

@@ -185,10 +185,9 @@ public class DoctorSignupPanel extends JPanel {
         BaseApiClient.ApiResult<String> result = ApiClientProvider.getInstance().auth().signupDoctor(request);
 
         if (result.isSuccess()) {
-            String signedUpEmail = emailValueLabel.getText();
+            // The invite code already verified the email, so the doctor goes straight to the success screen like the nurse does
             clearForm();
-            appFrame.getSignupVerifyCodePanel().setEmail(signedUpEmail);
-            appFrame.showScreen(AppFrame.SCREEN_SIGNUP_VERIFY);
+            appFrame.showScreen(AppFrame.SCREEN_EMPLOYEE_SIGNUP_SUCCESS);
         } else {
             errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Signup failed.");
         }

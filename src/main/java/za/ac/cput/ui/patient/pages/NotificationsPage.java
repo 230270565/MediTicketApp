@@ -13,7 +13,7 @@ import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Notification;
 import za.ac.cput.session.SessionManager;
-import za.ac.cput.ui.clinicstaff.components.NotificationDetailsDialog;
+import za.ac.cput.ui.patient.components.NotificationDetailsDialog;
 import za.ac.cput.ui.layout.LiveUpdater;
 import za.ac.cput.ui.layout.NotificationCard;
 import za.ac.cput.ui.layout.Refreshable;
@@ -194,6 +194,6 @@ public class NotificationsPage extends JPanel implements Refreshable {
                 }
             }.execute();
         }
-        NotificationDetailsDialog.show(this, n, "You", null, null);
+        NotificationDetailsDialog.show(this, n, null, null, null);
     }
 }

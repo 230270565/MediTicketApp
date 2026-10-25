@@ -1,19 +1,22 @@
 /*
  PaymentReceiptDialog.java
 
- Patient Payment Receipt Dialog - read-only view for a PAID or REFUNDED
+ Patient Payment Receipt Dialog — Stitch design system rewrite
 
  Author: Abdullahi Raage Farah (230971091)
 
- Date: 25th August 2026
+ Date: 25th October 2026
 */
 
 package za.ac.cput.ui.patient.components;
 
 import za.ac.cput.model.domain.Appointment;
 import za.ac.cput.model.domain.Payment;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,143 +26,68 @@ import java.time.format.DateTimeFormatter;
 public class PaymentReceiptDialog {
 
     public static void show(Component parent, Payment payment) {
-        JDialog dialog = new JDialog(
-                SwingUtilities.getWindowAncestor(parent),
-                "Payment Receipt",
-                Dialog.ModalityType.APPLICATION_MODAL
-        );
-        dialog.setLayout(new BorderLayout());
-        dialog.getContentPane().setBackground(AppTheme.SURFACE);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 520);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(
-                AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        // ── Header ────────────────────────────────────────────────────────────
+        body.add(StitchDialog.header(dialog, Icons.CARD, "Payment Receipt", "MediTicket Health Services"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(18));
 
-        content.add(buildHeader(payment));
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
-        content.add(buildDivider());
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-
-        content.add(buildRow("Doctor", doctorName(payment)));
-        content.add(buildRow("Appointment Date", appointmentDate(payment)));
-        content.add(buildRow("Payment Date", paymentDate(payment)));
-        content.add(buildRow("Method", methodDisplayName(payment.getPaymentMethod())));
-        content.add(buildRow("Payment ID", String.valueOf(payment.getPaymentId())));
-
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-        content.add(buildDivider());
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-        content.add(buildAmountRow(payment));
-
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
-        content.add(buildCloseButton(dialog));
-
-        dialog.add(content, BorderLayout.CENTER);
-        dialog.setSize(420, 420);
-        dialog.setLocationRelativeTo(parent);
-        dialog.setResizable(false);
-        dialog.setVisible(true);
-    }
-
-    private static JComponent buildHeader(Payment payment) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(false);
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel title = new JLabel("Payment Receipt");
-        title.setFont(FontManager.headlineFont(Font.BOLD, 20));
-        title.setForeground(AppTheme.TEXT_PRIMARY);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        boolean isPaid = "PAID".equals(payment.getPaymentStatus());
-        JLabel status = new JLabel(statusLabel(payment.getPaymentStatus()));
-        status.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        status.setForeground(isPaid ? AppTheme.STATUS_SUCCESS : AppTheme.STATUS_NEUTRAL);
-        status.setAlignmentX(Component.LEFT_ALIGNMENT);
-        status.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_XS, 0, 0, 0));
-
-        panel.add(title);
-        panel.add(status);
-        return panel;
-    }
-
-    private static JComponent buildDivider() {
-        JSeparator sep = new JSeparator();
-        sep.setForeground(AppTheme.DIVIDER);
-        sep.setAlignmentX(Component.LEFT_ALIGNMENT);
-        sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        return sep;
-    }
-
-    private static JComponent buildRow(String label, String value) {
-        JPanel row = new JPanel(new BorderLayout());
-        row.setOpaque(false);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
-        row.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
-
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        labelComp.setForeground(AppTheme.TEXT_SECONDARY);
-
-        JLabel valueComp = new JLabel(value != null ? value : "—");
-        valueComp.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        valueComp.setForeground(AppTheme.TEXT_PRIMARY);
-        valueComp.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        row.add(labelComp, BorderLayout.WEST);
-        row.add(valueComp, BorderLayout.EAST);
-        return row;
-    }
-
-    private static JComponent buildAmountRow(Payment payment) {
-        JPanel row = new JPanel(new BorderLayout());
-        row.setOpaque(false);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-
-        JLabel label = new JLabel("Amount");
-        label.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        label.setForeground(AppTheme.TEXT_SECONDARY);
+        // ── Amount hero ───────────────────────────────────────────────────────
+        JPanel amountHero = new JPanel();
+        amountHero.setLayout(new BoxLayout(amountHero, BoxLayout.Y_AXIS));
+        amountHero.setOpaque(false);
+        amountHero.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         String amountText = payment.getPaymentAmount() != null
                 ? "R" + payment.getPaymentAmount().setScale(2, RoundingMode.HALF_UP)
                 : "—";
-        JLabel amount = new JLabel(amountText);
-        amount.setFont(FontManager.headlineFont(Font.BOLD, 20));
-        amount.setForeground(AppTheme.TEXT_PRIMARY);
-        amount.setHorizontalAlignment(SwingConstants.RIGHT);
+        JLabel amountLabel = new JLabel(amountText);
+        amountLabel.setFont(FontManager.headlineFont(Font.BOLD, 20));
+        amountLabel.setForeground(AppTheme.TEXT_PRIMARY);
+        amountLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        row.add(label, BorderLayout.WEST);
-        row.add(amount, BorderLayout.EAST);
-        return row;
-    }
+        JPanel pillRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
+        pillRow.setOpaque(false);
+        pillRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        pillRow.add(new StatusPill(payment.getPaymentStatus()));
 
-    private static JComponent buildCloseButton(JDialog dialog) {
+        amountHero.add(amountLabel);
+        amountHero.add(pillRow);
+        body.add(amountHero);
+        body.add(Box.createVerticalStrut(18));
+
+        // ── 3×2 detail grid ───────────────────────────────────────────────────
+        JPanel grid = new JPanel(new GridLayout(3, 2, 24, 12));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+        grid.add(StitchDialog.metaCell("DOCTOR",           doctorName(payment)));
+        grid.add(StitchDialog.metaCell("APPOINTMENT DATE", appointmentDate(payment)));
+        grid.add(StitchDialog.metaCell("PAYMENT DATE",     paymentDate(payment)));
+        grid.add(StitchDialog.metaCell("METHOD",           methodDisplayName(payment.getPaymentMethod())));
+        grid.add(StitchDialog.metaCell("PAYMENT ID",       String.valueOf(payment.getPaymentId())));
+        grid.add(StitchDialog.metaCell("STATUS",           new StatusPill(payment.getPaymentStatus())));
+
+        body.add(grid);
+        body.add(Box.createVerticalStrut(20));
+
+        // ── Footer ────────────────────────────────────────────────────────────
+        JPanel footer = StitchDialog.buttonRow();
         JButton close = new JButton("Close");
-        close.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        close.setFocusPainted(false);
-        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        close.setBackground(AppTheme.PRIMARY);
-        close.setForeground(AppTheme.TEXT_ON_PRIMARY);
-        close.setAlignmentX(Component.CENTER_ALIGNMENT);
+        AppTheme.styleActionButton(close, true, null);
         close.addActionListener(e -> dialog.dispose());
+        footer.add(close);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        wrapper.setOpaque(false);
-        wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
-        wrapper.add(close);
-        return wrapper;
+        StitchDialog.packAndShow(dialog, parent, 520);
     }
 
-    private static String statusLabel(String status) {
-        if ("PAID".equals(status)) return "Paid in full";
-        if ("REFUNDED".equals(status)) return "Refunded";
-        return status != null ? status : "—";
-    }
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private static String doctorName(Payment payment) {
         Appointment appt = payment.getAppointment();
@@ -182,11 +110,11 @@ public class PaymentReceiptDialog {
     private static String methodDisplayName(String method) {
         if (method == null) return "—";
         return switch (method) {
-            case "CASH" -> "Cash";
-            case "CARD" -> "Card";
-            case "EFT" -> "EFT";
+            case "CASH"        -> "Cash";
+            case "CARD"        -> "Card";
+            case "EFT"         -> "EFT";
             case "MEDICAL_AID" -> "Medical Aid";
-            default -> method;
+            default            -> method;
         };
     }
 }

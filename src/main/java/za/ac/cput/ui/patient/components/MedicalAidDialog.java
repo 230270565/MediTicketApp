@@ -1,11 +1,11 @@
 /*
  MedicalAidDialog.java
 
- Patient dialog for medical aid
+ Patient dialog for medical aid — Stitch design system rewrite
 
  Author: Abdullahi Raage Farah (230971091)
 
- Date: 23rd August 2026
+ Date: 25th October 2026
 */
 
 package za.ac.cput.ui.patient.components;
@@ -14,6 +14,8 @@ import za.ac.cput.model.domain.Payment;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,16 +31,18 @@ public class MedicalAidDialog {
     };
 
     public static void show(Component parent, Payment payment) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Submit Medical Aid Claim", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(440, 510);
-        dialog.setLocationRelativeTo(parent);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 480);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        // ── Header ────────────────────────────────────────────────────────────
+        body.add(StitchDialog.header(dialog, Icons.CLIPBOARD,
+                "Medical Aid Claim",
+                "Submit or update your claim details"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(18));
 
+        // ── Amount hero ───────────────────────────────────────────────────────
         JLabel amountLabel = new JLabel("Amount to Claim");
         amountLabel.setFont(FontManager.bodyFont(Font.BOLD, 12));
         amountLabel.setForeground(AppTheme.TEXT_MUTED);
@@ -51,19 +55,10 @@ public class MedicalAidDialog {
         amountValue.setAlignmentX(Component.LEFT_ALIGNMENT);
         amountValue.setBorder(BorderFactory.createEmptyBorder(2, 0, AppTheme.SPACE_MD, 0));
 
-        JLabel subtitle = new JLabel("Submit or update your medical aid details.");
-        subtitle.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        subtitle.setForeground(AppTheme.TEXT_SECONDARY);
-        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        subtitle.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
+        body.add(amountLabel);
+        body.add(amountValue);
 
-        JLabel disclaimer = new JLabel("<html><i>Simulated submission for demonstration purposes. "
-                + "No details are transmitted to a medical aid scheme or stored.</i></html>");
-        disclaimer.setFont(FontManager.bodyFont(Font.PLAIN, 11));
-        disclaimer.setForeground(AppTheme.TEXT_MUTED);
-        disclaimer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        disclaimer.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
-
+        // ── Form fields ───────────────────────────────────────────────────────
         JComboBox<String> schemeCombo = new JComboBox<>(SCHEMES);
         schemeCombo.setFont(FontManager.bodyFont(Font.PLAIN, 14));
         schemeCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -72,23 +67,27 @@ public class MedicalAidDialog {
         JTextField memberNumber = styledField("123456789");
         JTextField dependentCode = styledField("e.g. 01 — leave blank if main member");
 
-        JLabel errorLabel = new JLabel(" ");
-        errorLabel.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-        errorLabel.setForeground(AppTheme.STATUS_DANGER);
-        errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        errorLabel.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, 0, 0));
+        JLabel errorLabel = StitchDialog.errorLabel();
 
-        JButton submitButton = new JButton("Submit Claim Details");
-        submitButton.setFont(FontManager.bodyFont(Font.BOLD, 14));
-        submitButton.setForeground(AppTheme.TEXT_ON_PRIMARY);
-        submitButton.setBackground(AppTheme.PRIMARY);
-        submitButton.setFocusPainted(false);
-        submitButton.setBorderPainted(false);
-        submitButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        submitButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        submitButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-        submitButton.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
-        submitButton.addActionListener(e -> {
+        body.add(StitchDialog.fieldLabel("Medical Aid Scheme"));
+        body.add(schemeCombo);
+        body.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        body.add(StitchDialog.fieldLabel("Membership Number"));
+        body.add(memberNumber);
+        body.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        body.add(StitchDialog.fieldLabel("Dependent Code (optional)"));
+        body.add(dependentCode);
+        body.add(errorLabel);
+        body.add(Box.createVerticalStrut(20));
+
+        // ── Footer ────────────────────────────────────────────────────────────
+        JButton cancel = new JButton("Cancel");
+        AppTheme.styleActionButton(cancel, false, null);
+        cancel.addActionListener(e -> dialog.dispose());
+
+        JButton submit = new JButton("Submit Claim Details");
+        AppTheme.styleActionButton(submit, true, null);
+        submit.addActionListener(e -> {
             String scheme = (String) schemeCombo.getSelectedItem();
             if (scheme == null || SCHEME_PROMPT.equals(scheme)) {
                 errorLabel.setText("Please select your medical aid scheme.");
@@ -119,35 +118,16 @@ public class MedicalAidDialog {
                     AppDialog.Type.SUCCESS);
         });
 
-        content.add(amountLabel);
-        content.add(amountValue);
-        content.add(subtitle);
-        content.add(disclaimer);
-        content.add(fieldLabel("Medical Aid Scheme"));
-        content.add(schemeCombo);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
-        content.add(fieldLabel("Membership Number"));
-        content.add(memberNumber);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
-        content.add(fieldLabel("Dependent Code (optional)"));
-        content.add(dependentCode);
-        content.add(errorLabel);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-        content.add(submitButton);
+        JPanel footer = StitchDialog.buttonRow();
+        footer.add(cancel);
+        footer.add(submit);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        StitchDialog.packAndShow(dialog, parent, 480);
     }
 
-    private static JLabel fieldLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        label.setForeground(AppTheme.TEXT_MUTED);
-        label.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 6));
-        return label;
-    }
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private static JTextField styledField(String placeholder) {
         JTextField field = new JTextField();

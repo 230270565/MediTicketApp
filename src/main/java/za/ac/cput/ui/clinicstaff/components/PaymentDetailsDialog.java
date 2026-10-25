@@ -1,21 +1,25 @@
 /*
  PaymentDetailsDialog.java
 
- Dialog for payment details
+ Dialog for payment details — rewritten for the Stitch design system.
 
  Author: Abdullahi Raage Farah (230971091)
 
- Date: 18th August 2026
+ Date: 25th October 2026
 */
 
 package za.ac.cput.ui.clinicstaff.components;
+
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
 import za.ac.cput.model.domain.Payment;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,78 +28,99 @@ import java.math.RoundingMode;
 public class PaymentDetailsDialog {
 
     public static void show(Component parent, Payment payment, Runnable onChanged) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Payment Details", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(420, 400);
-        dialog.setLocationRelativeTo(parent);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 520);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        body.add(StitchDialog.header(dialog, Icons.CARD, "Payment Details", "Billing Record"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(18));
 
-        content.add(field("Patient", patientName(payment)));
-        content.add(field("Doctor", doctorName(payment)));
-        content.add(field("Appointment", appointmentDate(payment)));
-        content.add(field("Amount", payment.getPaymentAmount() != null
-                ? "R" + payment.getPaymentAmount().setScale(2, RoundingMode.HALF_UP) : "—"));
-        content.add(field("Method", payment.getPaymentMethod() != null ? payment.getPaymentMethod() : "—"));
+        // 3×2 grid
+        JPanel grid = new JPanel(new GridLayout(3, 2, 24, 14));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 230));
 
-        JLabel statusValue = new JLabel(payment.getPaymentStatus() != null ? payment.getPaymentStatus() : "—");
-        statusValue.setFont(FontManager.bodyFont(Font.BOLD, 14));
-        statusValue.setForeground(AppTheme.statusColor(payment.getPaymentStatus()));
-        content.add(labeledRow("Status", statusValue));
+        // Row 1: Patient | Doctor
+        String patFirst = patientFirstName(payment);
+        String patLast  = patientLastName(payment);
+        grid.add(StitchDialog.metaCell("PATIENT",
+                StitchDialog.personCell(
+                        StitchDialog.initials(patFirst, patLast),
+                        patientName(payment), "Patient", AppTheme.TEXT_MUTED)));
 
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
+        String docFirst = doctorFirstName(payment);
+        String docLast  = doctorLastName(payment);
+        grid.add(StitchDialog.metaCell("DOCTOR",
+                StitchDialog.personCell(
+                        StitchDialog.initials(docFirst, docLast),
+                        doctorName(payment), "Doctor", AppTheme.TEXT_MUTED)));
 
-        boolean isEft = "EFT".equals(payment.getPaymentMethod());
+        // Row 2: Appointment Date | Method
+        grid.add(StitchDialog.metaCell("APPOINTMENT DATE", appointmentDate(payment)));
+        grid.add(StitchDialog.metaCell("METHOD",
+                payment.getPaymentMethod() != null
+                        ? AppTheme.label(payment.getPaymentMethod())
+                        : "—"));
+
+        // Row 3: Amount (bold, large) | Status
+        JLabel amountLabel = new JLabel(payment.getPaymentAmount() != null
+                ? "R" + payment.getPaymentAmount().setScale(2, RoundingMode.HALF_UP) : "—");
+        amountLabel.setFont(FontManager.bodyFont(Font.BOLD, 18));
+        amountLabel.setForeground(AppTheme.TEXT_PRIMARY);
+        grid.add(StitchDialog.metaCell("AMOUNT", amountLabel));
+        grid.add(StitchDialog.metaCell("STATUS", new StatusPill(payment.getPaymentStatus())));
+
+        body.add(grid);
+        body.add(Box.createVerticalStrut(18));
+
+        // Info / action section based on status
+        boolean isEft        = "EFT".equals(payment.getPaymentMethod());
         boolean isMedicalAid = "MEDICAL_AID".equals(payment.getPaymentMethod());
-        boolean isPending = "PENDING".equals(payment.getPaymentStatus());
+        boolean isPending    = "PENDING".equals(payment.getPaymentStatus());
 
         if (isPending && isEft) {
-            JLabel note = new JLabel("<html><i>Waiting for the patient to complete payment on their dashboard.</i></html>");
-            note.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-            note.setForeground(AppTheme.TEXT_MUTED);
-            note.setAlignmentX(Component.LEFT_ALIGNMENT);
-            content.add(note);
+            body.add(StitchDialog.infoBanner(
+                    "Waiting for the patient to complete payment on their dashboard."));
+            body.add(Box.createVerticalStrut(8));
         } else if (isPending) {
+            String noteText = isMedicalAid
+                    ? "Awaiting medical aid authorisation — confirm once approved."
+                    : "Collected in person — confirm once received.";
+            body.add(StitchDialog.infoBanner(noteText));
+            body.add(Box.createVerticalStrut(10));
 
-            JLabel note = new JLabel(isMedicalAid
-                    ? "<html><i>Awaiting medical aid authorisation — confirm once approved.</i></html>"
-                    : "<html><i>Collected in person — confirm once received.</i></html>");
-            note.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-            note.setForeground(AppTheme.TEXT_MUTED);
-            note.setAlignmentX(Component.LEFT_ALIGNMENT);
-            note.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
-            content.add(note);
-
-            JButton markPaidButton = new JButton("Mark as Paid");
-            markPaidButton.setFont(FontManager.bodyFont(Font.BOLD, 13));
-            markPaidButton.setForeground(AppTheme.TEXT_ON_PRIMARY);
-            markPaidButton.setBackground(AppTheme.STATUS_SUCCESS);
-            markPaidButton.setFocusPainted(false);
-            markPaidButton.setBorderPainted(false);
-            markPaidButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-            markPaidButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            markPaidButton.setBorder(BorderFactory.createEmptyBorder(6, 14, 6, 14));
-            markPaidButton.addActionListener(e -> markAsPaid(dialog, parent, payment, onChanged));
-            content.add(markPaidButton);
+            JButton markPaid = new JButton("Mark as Paid");
+            AppTheme.styleActionButton(markPaid, true, Icons.CHECK);
+            markPaid.setBackground(AppTheme.STATUS_SUCCESS);
+            markPaid.addActionListener(e -> markAsPaid(dialog, parent, payment, onChanged));
+            JPanel btnWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            btnWrap.setOpaque(false);
+            btnWrap.setAlignmentX(Component.LEFT_ALIGNMENT);
+            btnWrap.add(markPaid);
+            body.add(btnWrap);
+            body.add(Box.createVerticalStrut(8));
         } else if ("FAILED".equals(payment.getPaymentStatus())) {
-            JLabel note = new JLabel("<html><i>This payment attempt failed.</i></html>");
-            note.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-            note.setForeground(AppTheme.STATUS_DANGER);
-            note.setAlignmentX(Component.LEFT_ALIGNMENT);
-            content.add(note);
+            body.add(StitchDialog.banner("This payment attempt failed.",
+                    AppTheme.STATUS_DANGER_BG, AppTheme.STATUS_DANGER));
+            body.add(Box.createVerticalStrut(8));
         } else if ("REFUNDED".equals(payment.getPaymentStatus())) {
-            JLabel note = new JLabel("<html><i>This payment has been refunded.</i></html>");
-            note.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-            note.setForeground(AppTheme.TEXT_MUTED);
-            note.setAlignmentX(Component.LEFT_ALIGNMENT);
-            content.add(note);
+            body.add(StitchDialog.infoBanner("This payment has been refunded."));
+            body.add(Box.createVerticalStrut(8));
         }
 
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        body.add(Box.createVerticalStrut(20));
+
+        JPanel footer = StitchDialog.buttonRow();
+        JButton close = new JButton("Close");
+        AppTheme.styleActionButton(close, false, null);
+        close.addActionListener(e -> dialog.dispose());
+        footer.add(close);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
+
+        StitchDialog.packAndShow(dialog, parent, 520);
     }
 
     private static void markAsPaid(JDialog dialog, Component parent, Payment payment, Runnable onChanged) {
@@ -126,8 +151,22 @@ public class PaymentDetailsDialog {
         Appointment appt = payment.getAppointment();
         if (appt == null || appt.getPatient() == null || appt.getPatient().getName() == null) return "—";
         String first = appt.getPatient().getName().getFirstName();
-        String last = appt.getPatient().getName().getLastName();
+        String last  = appt.getPatient().getName().getLastName();
         return (first != null ? first : "") + " " + (last != null ? last : "");
+    }
+
+    private static String patientFirstName(Payment payment) {
+        Appointment appt = payment.getAppointment();
+        if (appt == null || appt.getPatient() == null || appt.getPatient().getName() == null) return "";
+        return appt.getPatient().getName().getFirstName() != null
+                ? appt.getPatient().getName().getFirstName() : "";
+    }
+
+    private static String patientLastName(Payment payment) {
+        Appointment appt = payment.getAppointment();
+        if (appt == null || appt.getPatient() == null || appt.getPatient().getName() == null) return "";
+        return appt.getPatient().getName().getLastName() != null
+                ? appt.getPatient().getName().getLastName() : "";
     }
 
     private static String doctorName(Payment payment) {
@@ -137,35 +176,24 @@ public class PaymentDetailsDialog {
         return "Dr. " + (last != null ? last : "—");
     }
 
+    private static String doctorFirstName(Payment payment) {
+        Appointment appt = payment.getAppointment();
+        if (appt == null || appt.getDoctor() == null || appt.getDoctor().getName() == null) return "";
+        return appt.getDoctor().getName().getFirstName() != null
+                ? appt.getDoctor().getName().getFirstName() : "";
+    }
+
+    private static String doctorLastName(Payment payment) {
+        Appointment appt = payment.getAppointment();
+        if (appt == null || appt.getDoctor() == null || appt.getDoctor().getName() == null) return "";
+        return appt.getDoctor().getName().getLastName() != null
+                ? appt.getDoctor().getName().getLastName() : "";
+    }
+
     private static String appointmentDate(Payment payment) {
         Appointment appt = payment.getAppointment();
         if (appt == null || appt.getAppointmentDate() == null) return "—";
-        return appt.getAppointmentDate() + " " + (appt.getAppointmentTime() != null ? appt.getAppointmentTime() : "");
-    }
-
-    private static JComponent field(String label, String value) {
-        JLabel valueLabel = new JLabel(value);
-        valueLabel.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        valueLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        return labeledRow(label, valueLabel);
-    }
-
-    private static JComponent labeledRow(String label, JComponent valueComponent) {
-        JPanel block = new JPanel();
-        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
-        block.setOpaque(false);
-        block.setAlignmentX(Component.LEFT_ALIGNMENT);
-        block.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
-
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        labelComp.setForeground(AppTheme.TEXT_MUTED);
-        labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        valueComponent.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        block.add(labelComp);
-        block.add(valueComponent);
-        return block;
+        return appt.getAppointmentDate() + " " +
+                (appt.getAppointmentTime() != null ? appt.getAppointmentTime() : "");
     }
 }

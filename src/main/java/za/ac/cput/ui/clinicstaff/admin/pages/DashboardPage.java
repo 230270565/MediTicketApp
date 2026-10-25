@@ -17,33 +17,45 @@ import za.ac.cput.model.auth.EmployeeAccessRequest;
 import za.ac.cput.model.domain.Appointment;
 import za.ac.cput.model.domain.ClinicStaff;
 import za.ac.cput.model.domain.Doctor;
+import za.ac.cput.model.domain.Notification;
 import za.ac.cput.session.SessionManager;
-import za.ac.cput.ui.clinicstaff.components.ActivityRow;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
+import za.ac.cput.ui.patient.components.StatusBadge;
 import za.ac.cput.ui.theme.AppTheme;
-import za.ac.cput.ui.theme.Icons;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.ImageManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class DashboardPage extends JPanel implements Refreshable {
 
-    private SummaryCard staffCard;
-    private SummaryCard invitesCard;
-    private SummaryCard appointmentsCard;
-    private SummaryCard notificationsCard;
-
-    private JPanel clinicActivitySection;
-    private JPanel staffOverviewSection;
-    private JPanel onboardingOverviewSection;
-    private JPanel recentActivitySection;
-
-    // Opens another admin page (quick actions); set by AdminDashboard.
     private final java.util.function.Consumer<String> navigate;
+
+    private JLabel greetingLabel;
+    private JLabel subtitleLabel;
+    private SummaryCard staffCard, invitesCard, appointmentsCard, notificationsCard;
+    private JPanel activityList;
+    private JLabel activityEmptyLabel;
+    private JPanel invitationList;
+    private JLabel invitationEmptyLabel;
+    private JPanel recentActivityList;
+    private JLabel recentActivityEmptyLabel;
+    private JLabel doctorCountLabel, nurseCountLabel, totalStaffLabel;
+    private JLabel loadErrorLabel;
+
+    private List<Appointment> allAppointments = new ArrayList<>();
+    private List<Doctor> allDoctors = new ArrayList<>();
+    private List<ClinicStaff> allStaff = new ArrayList<>();
+    private List<EmployeeAccessRequest> pendingRequests = new ArrayList<>();
+    private List<Notification> myNotifications = new ArrayList<>();
+    private boolean loading = false;
 
     public DashboardPage() {
         this(null);
@@ -54,290 +66,662 @@ public class DashboardPage extends JPanel implements Refreshable {
         setLayout(new BorderLayout());
         setBackground(AppTheme.BACKGROUND);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.BACKGROUND);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        JScrollPane scrollPane = new JScrollPane(buildContent());
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(AppTheme.BACKGROUND);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        add(scrollPane, BorderLayout.CENTER);
 
-        content.add(buildGreeting());
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
-        content.add(buildSummaryCards());
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
-        content.add(buildTwoColumnSection());
-
-        JScrollPane scroll = new JScrollPane(content);
-        scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        add(scroll, BorderLayout.CENTER);
-
-        loadData();
+        refresh();
     }
 
-    /** Called by LiveUpdater when this page is opened and every few seconds while visible. */
     @Override
     public void refresh() {
-        loadData();
+        if (loading) return;
+        loading = true;
+        loadErrorLabel.setVisible(false);
+
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            String errorMessage = null;
+
+            @Override
+            protected Void doInBackground() {
+                ApiClientProvider api = ApiClientProvider.getInstance();
+
+                BaseApiClient.ApiResult<List<Appointment>> apptResult = api.appointments().getAll();
+                if (apptResult.isSuccess()) {
+                    allAppointments = apptResult.getData();
+                } else {
+                    errorMessage = "Couldn't reach the server. Make sure the backend is running.";
+                    return null;
+                }
+
+                BaseApiClient.ApiResult<List<Doctor>> doctorResult = api.doctors().getAll();
+                allDoctors = doctorResult.isSuccess() && doctorResult.getData() != null
+                        ? doctorResult.getData() : new ArrayList<>();
+
+                BaseApiClient.ApiResult<List<ClinicStaff>> staffResult = api.clinicStaff().getAll();
+                allStaff = staffResult.isSuccess() && staffResult.getData() != null
+                        ? staffResult.getData() : new ArrayList<>();
+
+                BaseApiClient.ApiResult<List<EmployeeAccessRequest>> requestResult =
+                        api.auth().getAccessRequests("PENDING");
+                pendingRequests = requestResult.isSuccess() && requestResult.getData() != null
+                        ? requestResult.getData() : new ArrayList<>();
+
+                int userId = SessionManager.getInstance().getUserId();
+                BaseApiClient.ApiResult<List<Notification>> notifResult =
+                        api.notifications().findByClinicStaff(userId);
+                myNotifications = notifResult.isSuccess() && notifResult.getData() != null
+                        ? notifResult.getData() : new ArrayList<>();
+
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                loading = false;
+                if (errorMessage != null) {
+                    loadErrorLabel.setText(errorMessage);
+                    loadErrorLabel.setVisible(true);
+                    return;
+                }
+                applyData();
+            }
+        };
+        worker.execute();
     }
 
-    private JComponent buildGreeting() {
+    // -- Layout ----------------------------------------------------------
+
+    private JComponent buildContent() {
+        JPanel root = new JPanel();
+        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
+        root.setBackground(AppTheme.BACKGROUND);
+        root.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_XL, AppTheme.SPACE_LG));
+
+        root.add(noVStretch(buildGreetingSection()));
+        root.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
+        root.add(noVStretch(buildQuickActions()));
+        root.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
+
+        loadErrorLabel = new JLabel(" ");
+        loadErrorLabel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        loadErrorLabel.setForeground(AppTheme.STATUS_DANGER);
+        loadErrorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        loadErrorLabel.setVisible(false);
+        root.add(loadErrorLabel);
+
+        root.add(buildBentoGrid());
+        return root;
+    }
+
+    private JComponent buildBentoGrid() {
+        JPanel grid = new JPanel(new GridBagLayout());
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+        int gap = AppTheme.SPACE_MD;
+
+        // Row 0: four summary cards
+        staffCard         = new SummaryCard("Staff",               "—", AppTheme.PRIMARY);
+        invitesCard       = new SummaryCard("Pending Invitations", "—", AppTheme.STATUS_WARNING);
+        appointmentsCard  = new SummaryCard("Appointments",        "—", AppTheme.STATUS_INFO);
+        notificationsCard = new SummaryCard("Unread Notifications","—", AppTheme.PRIMARY);
+        JComponent[] cards = { staffCard, invitesCard, appointmentsCard, notificationsCard };
+        for (int col = 0; col < 4; col++) {
+            GridBagConstraints c = bentoConstraints(col, 0, 1, 1, gap);
+            c.weighty = 0;
+            c.fill = GridBagConstraints.HORIZONTAL;
+            grid.add(cards[col], c);
+        }
+
+        // Row 1-2, col 0-1: Today's Clinic Activity (big tile)
+        grid.add(buildClinicActivityCard(), bentoConstraints(0, 1, 2, 2, gap));
+
+        // Row 1-2, col 2: Pending Invitations (individual request rows)
+        grid.add(buildInvitationsCard(), bentoConstraints(2, 1, 1, 2, gap));
+
+        // Row 1, col 3: Recent Activity
+        grid.add(buildRecentActivityTile(), bentoConstraints(3, 1, 1, 1, gap));
+
+        // Row 2, col 3: Staff Overview
+        grid.add(buildStaffOverviewTile(), bentoConstraints(3, 2, 1, 1, gap));
+
+        // Row 3: Manage Staff shortcut, full width
+        GridBagConstraints manage = bentoConstraints(0, 3, 4, 1, gap);
+        manage.weighty = 0;
+        manage.fill = GridBagConstraints.HORIZONTAL;
+        grid.add(buildManageStaffTile(), manage);
+
+        // Row 4: tip banner, full width
+        GridBagConstraints tip = bentoConstraints(0, 4, 4, 1, gap);
+        tip.weighty = 0;
+        tip.fill = GridBagConstraints.HORIZONTAL;
+        grid.add(buildTipBanner(), tip);
+
+        return grid;
+    }
+
+    private GridBagConstraints bentoConstraints(int gridx, int gridy, int gridwidth, int gridheight, int gap) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = gridx;
+        c.gridy = gridy;
+        c.gridwidth = gridwidth;
+        c.gridheight = gridheight;
+        c.weightx = 1;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.BOTH;
+        c.insets = new Insets(0, 0, gap, gap);
+        return c;
+    }
+
+    private JComponent buildGreetingSection() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        SessionManager session = SessionManager.getInstance();
-        String firstName = extractFirstName(session.getFullName());
+        JLabel eyebrow = new JLabel("CLINIC ADMINISTRATION");
+        eyebrow.setFont(FontManager.bodyFont(Font.BOLD, 11));
+        eyebrow.setForeground(AppTheme.PRIMARY);
+        eyebrow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel greeting = new JLabel(greetingForTime() + ", " + firstName);
-        greeting.setFont(FontManager.headlineFont(Font.BOLD, 26));
-        greeting.setForeground(AppTheme.TEXT_PRIMARY);
-        greeting.setAlignmentX(Component.LEFT_ALIGNMENT);
+        greetingLabel = new JLabel("Good Morning");
+        greetingLabel.setFont(FontManager.headlineFont(Font.BOLD, 30));
+        greetingLabel.setForeground(AppTheme.TEXT_PRIMARY);
+        greetingLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        greetingLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 4, 0));
 
-        JLabel subtitle = new JLabel("Welcome back to MediTicket. Here's an overview of today's clinic activity.");
-        subtitle.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        subtitle.setForeground(AppTheme.TEXT_SECONDARY);
-        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        subtitle.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_XS, 0, AppTheme.SPACE_MD, 0));
+        subtitleLabel = new JLabel("Here's an overview of today's clinic activity.");
+        subtitleLabel.setFont(FontManager.bodyFont(Font.PLAIN, 14));
+        subtitleLabel.setForeground(AppTheme.TEXT_SECONDARY);
+        subtitleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Same quick-action style on every role's home page: first action filled, rest outlined.
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, AppTheme.SPACE_SM, 0));
-        actions.setOpaque(false);
-        actions.setAlignmentX(Component.LEFT_ALIGNMENT);
-        actions.add(quickAction("Invite staff", Icons.CLIPBOARD, true, "ONBOARDING"));
-        actions.add(quickAction("Appointments", Icons.CALENDAR, false, "APPOINTMENTS"));
-        actions.add(quickAction("Reports", Icons.CHART, false, "REPORTS"));
-
-        panel.add(greeting);
-        panel.add(subtitle);
-        panel.add(actions);
+        panel.add(eyebrow);
+        panel.add(greetingLabel);
+        panel.add(subtitleLabel);
         return panel;
+    }
+
+    private JComponent buildQuickActions() {
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, AppTheme.SPACE_SM, 0));
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.add(quickAction("Invite staff",  Icons.CLIPBOARD, true,  "ONBOARDING"));
+        row.add(quickAction("Appointments",  Icons.CALENDAR,  false, "APPOINTMENTS"));
+        row.add(quickAction("Reports",       Icons.CHART,     false, "REPORTS"));
+        return row;
     }
 
     private JButton quickAction(String label, String icon, boolean primary, String pageKey) {
         JButton button = new JButton(label);
         AppTheme.styleActionButton(button, primary, icon);
-        button.addActionListener(e -> {
-            if (navigate != null) navigate.accept(pageKey);
-        });
+        button.addActionListener(e -> { if (navigate != null) navigate.accept(pageKey); });
         return button;
     }
 
-    private String greetingForTime() {
-        int hour = LocalTime.now().getHour();
-        if (hour < 12) return "Good Morning";
-        if (hour < 17) return "Good Afternoon";
-        return "Good Evening";
+    private JComponent buildClinicActivityCard() {
+        JPanel card = cardPanel();
+        card.setLayout(new BorderLayout());
+
+        JLabel title = new JLabel("Today's Clinic Activity");
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
+        title.setForeground(AppTheme.TEXT_PRIMARY);
+        title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
+        card.add(title, BorderLayout.NORTH);
+
+        activityList = new JPanel();
+        activityList.setLayout(new BoxLayout(activityList, BoxLayout.Y_AXIS));
+        activityList.setOpaque(false);
+
+        activityEmptyLabel = new JLabel("No appointments scheduled for today.");
+        activityEmptyLabel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        activityEmptyLabel.setForeground(AppTheme.TEXT_MUTED);
+        activityEmptyLabel.setVisible(false);
+        activityList.add(activityEmptyLabel);
+
+        JScrollPane scroll = new JScrollPane(activityList);
+        scroll.setBorder(null);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
+        scroll.getVerticalScrollBar().setUnitIncrement(14);
+        card.add(scroll, BorderLayout.CENTER);
+
+        JButton viewAllBtn = smallLinkButton("View All Appointments", AppTheme.PRIMARY);
+        viewAllBtn.addActionListener(e -> { if (navigate != null) navigate.accept("APPOINTMENTS"); });
+        card.add(wrapRight(viewAllBtn), BorderLayout.SOUTH);
+
+        return card;
     }
 
-    private String extractFirstName(String fullName) {
-        if (fullName == null || fullName.isBlank()) return "there";
-        return fullName.split(" ")[0];
+    private JComponent buildInvitationsCard() {
+        JPanel card = cardPanel();
+        card.setLayout(new BorderLayout());
+
+        JLabel title = new JLabel("Pending Invitations");
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
+        title.setForeground(AppTheme.TEXT_PRIMARY);
+        title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
+        card.add(title, BorderLayout.NORTH);
+
+        invitationList = new JPanel();
+        invitationList.setLayout(new BoxLayout(invitationList, BoxLayout.Y_AXIS));
+        invitationList.setOpaque(false);
+
+        invitationEmptyLabel = new JLabel("<html>No pending requests. Staff request access from the login screen.</html>");
+        invitationEmptyLabel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        invitationEmptyLabel.setForeground(AppTheme.TEXT_MUTED);
+        invitationEmptyLabel.setVisible(false);
+        invitationList.add(invitationEmptyLabel);
+
+        JScrollPane scroll = new JScrollPane(invitationList);
+        scroll.setBorder(null);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
+        scroll.getVerticalScrollBar().setUnitIncrement(14);
+        card.add(scroll, BorderLayout.CENTER);
+
+        JButton viewAllBtn = smallLinkButton("Go to Onboarding", AppTheme.PRIMARY);
+        viewAllBtn.addActionListener(e -> { if (navigate != null) navigate.accept("ONBOARDING"); });
+        card.add(wrapRight(viewAllBtn), BorderLayout.SOUTH);
+
+        return card;
     }
 
-    private JComponent buildSummaryCards() {
-        JPanel grid = new JPanel(new GridLayout(1, 4, AppTheme.SPACE_MD, 0));
-        grid.setOpaque(false);
-        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+    private JComponent buildRecentActivityTile() {
+        JPanel card = cardPanel();
+        card.setLayout(new BorderLayout());
 
-        staffCard = new SummaryCard("Staff", "—", AppTheme.PRIMARY);
-        invitesCard = new SummaryCard("Invites", "—", AppTheme.STATUS_WARNING);
-        appointmentsCard = new SummaryCard("Appointments", "—", AppTheme.STATUS_INFO);
-        notificationsCard = new SummaryCard("Unread Notifications", "—", AppTheme.PRIMARY);
+        JLabel title = new JLabel("Recent Activity");
+        title.setFont(FontManager.bodyFont(Font.BOLD, 15));
+        title.setForeground(AppTheme.TEXT_PRIMARY);
+        title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
+        card.add(title, BorderLayout.NORTH);
 
-        grid.add(staffCard);
-        grid.add(invitesCard);
-        grid.add(appointmentsCard);
-        grid.add(notificationsCard);
-        return grid;
+        recentActivityList = new JPanel();
+        recentActivityList.setLayout(new BoxLayout(recentActivityList, BoxLayout.Y_AXIS));
+        recentActivityList.setOpaque(false);
+
+        recentActivityEmptyLabel = new JLabel("Notifications and clinic events will appear here.");
+        recentActivityEmptyLabel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        recentActivityEmptyLabel.setForeground(AppTheme.TEXT_MUTED);
+        recentActivityEmptyLabel.setVisible(false);
+        recentActivityList.add(recentActivityEmptyLabel);
+
+        JScrollPane scroll = new JScrollPane(recentActivityList);
+        scroll.setBorder(null);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
+        scroll.getVerticalScrollBar().setUnitIncrement(14);
+        card.add(scroll, BorderLayout.CENTER);
+
+        return card;
     }
 
-    private JComponent buildTwoColumnSection() {
-        JPanel columns = new JPanel(new GridLayout(1, 2, AppTheme.SPACE_LG, 0));
-        columns.setOpaque(false);
-        columns.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JPanel leftColumn = new JPanel();
-        leftColumn.setLayout(new BoxLayout(leftColumn, BoxLayout.Y_AXIS));
-        leftColumn.setOpaque(false);
-
-        clinicActivitySection = buildCardSection("Today's Clinic Activity");
-        staffOverviewSection = buildCardSection("Staff Overview");
-        leftColumn.add(clinicActivitySection);
-        leftColumn.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
-        leftColumn.add(staffOverviewSection);
-
-        JPanel rightColumn = new JPanel();
-        rightColumn.setLayout(new BoxLayout(rightColumn, BoxLayout.Y_AXIS));
-        rightColumn.setOpaque(false);
-
-        onboardingOverviewSection = buildCardSection("Pending Invitations");
-        recentActivitySection = buildCardSection("Recent Activity");
-        rightColumn.add(onboardingOverviewSection);
-        rightColumn.add(Box.createVerticalStrut(AppTheme.SPACE_LG));
-        rightColumn.add(recentActivitySection);
-
-        columns.add(leftColumn);
-        columns.add(rightColumn);
-        return columns;
-    }
-
-    private JPanel buildCardSection(String title) {
-        // Full column width, natural height: the Recent Activity card used to shrink to its text.
-        JPanel card = new JPanel() {
-            @Override public Dimension getMaximumSize() {
-                return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
-            }
-        };
+    private JComponent buildStaffOverviewTile() {
+        JPanel card = cardPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel("Staff Overview");
+        title.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        title.setForeground(AppTheme.TEXT_PRIMARY);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(title);
+        card.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+
+        doctorCountLabel = staffStatRow("Doctors",    "—", null, card);
+        nurseCountLabel   = staffStatRow("Nurses",     "—", null, card);
+        totalStaffLabel   = staffStatRow("Total Staff","—", AppTheme.PRIMARY, card);
+
+        card.add(Box.createVerticalGlue());
+        return card;
+    }
+
+    // Adds a stat row to the parent panel and returns the value label so it can be updated later.
+    private JLabel staffStatRow(String label, String value, Color valueColor, JPanel parent) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        row.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_XS, 0));
+
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        lbl.setForeground(AppTheme.TEXT_SECONDARY);
+
+        JLabel val = new JLabel(value);
+        val.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        val.setForeground(valueColor != null ? valueColor : AppTheme.TEXT_PRIMARY);
+
+        row.add(lbl, BorderLayout.WEST);
+        row.add(val, BorderLayout.EAST);
+
+        parent.add(row);
+        return val;
+    }
+
+    private JComponent buildManageStaffTile() {
+        JPanel card = cardPanel();
+        card.setLayout(new BorderLayout(AppTheme.SPACE_MD, 0));
+
+        JPanel header = new JPanel(new BorderLayout(AppTheme.SPACE_SM, 0));
+        header.setOpaque(false);
+        header.add(new JLabel(Icons.get(Icons.USERS, 22, AppTheme.PRIMARY)), BorderLayout.WEST);
+        JLabel titleLbl = new JLabel("Staff Directory");
+        titleLbl.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        titleLbl.setForeground(AppTheme.TEXT_PRIMARY);
+        header.add(titleLbl, BorderLayout.CENTER);
+        card.add(header, BorderLayout.WEST);
+
+        JLabel desc = new JLabel("<html>View and manage all doctors, nurses, and admin staff.</html>");
+        desc.setFont(FontManager.bodyFont(Font.PLAIN, 12));
+        desc.setForeground(AppTheme.TEXT_SECONDARY);
+        card.add(desc, BorderLayout.CENTER);
+
+        JButton openBtn = smallLinkButton("Open Staff", AppTheme.PRIMARY);
+        openBtn.addActionListener(e -> { if (navigate != null) navigate.accept("STAFF"); });
+        card.add(wrapRight(openBtn), BorderLayout.EAST);
+
+        return card;
+    }
+
+    private JComponent buildTipBanner() {
+        JPanel tipCard = new JPanel(new BorderLayout(AppTheme.SPACE_SM, 0));
+        tipCard.setBackground(AppTheme.PRIMARY_LIGHT);
+        tipCard.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_MD, AppTheme.SPACE_MD, AppTheme.SPACE_MD, AppTheme.SPACE_MD));
+        tipCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel tipIcon = new JLabel(ImageManager.getIcon(ImageManager.ICON_HEARTBEAT, 26, 26));
+        JLabel tipText = new JLabel("<html><b>Tip:</b> Review pending invitations regularly so new staff can complete onboarding promptly.</html>");
+        tipText.setFont(FontManager.bodyFont(Font.PLAIN, 12));
+        tipText.setForeground(AppTheme.PRIMARY_DARK);
+
+        tipCard.add(tipIcon, BorderLayout.WEST);
+        tipCard.add(tipText, BorderLayout.CENTER);
+        return tipCard;
+    }
+
+    private JPanel cardPanel() {
+        JPanel card = new JPanel();
         card.setBackground(AppTheme.SURFACE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(AppTheme.BORDER, 1, true),
                 BorderFactory.createEmptyBorder(AppTheme.SPACE_MD, AppTheme.SPACE_MD, AppTheme.SPACE_MD, AppTheme.SPACE_MD)
         ));
-        card.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(FontManager.bodyFont(Font.BOLD, 15));
-        titleLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
-
-        card.add(titleLabel);
-
-        JLabel loading = new JLabel("Loading...");
-        loading.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        loading.setForeground(AppTheme.TEXT_MUTED);
-        loading.setAlignmentX(Component.LEFT_ALIGNMENT);
-        card.add(loading);
-
         return card;
     }
 
-    private void replaceSectionBody(JPanel section, List<JComponent> rows) {
-        while (section.getComponentCount() > 1) {
-            section.remove(1);
-        }
-        for (JComponent row : rows) {
-            row.setAlignmentX(Component.LEFT_ALIGNMENT);
-            section.add(row);
-        }
-        section.revalidate();
-        section.repaint();
+    // Wraps a component so BoxLayout Y_AXIS won't vertically stretch it beyond its preferred height.
+    private JComponent noVStretch(JComponent c) {
+        JPanel w = new JPanel(new BorderLayout()) {
+            @Override public Dimension getMaximumSize() {
+                return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+            }
+        };
+        w.setOpaque(false);
+        w.setAlignmentX(Component.LEFT_ALIGNMENT);
+        w.add(c, BorderLayout.CENTER);
+        return w;
     }
 
-    private void loadData() {
-        List<Doctor> doctors = List.of();
-        List<ClinicStaff> staff = List.of();
-        List<Appointment> appointments = List.of();
-        List<EmployeeAccessRequest> pendingRequests = List.of();
+    // -- Data application ------------------------------------------------
 
-        BaseApiClient.ApiResult<List<Doctor>> doctorResult = ApiClientProvider.getInstance().doctors().getAll();
-        if (doctorResult.isSuccess()) doctors = doctorResult.getData();
+    private void applyData() {
+        String name = SessionManager.getInstance().getFullName();
+        String firstName = name != null && !name.isBlank() ? name.split(" ")[0] : "there";
+        greetingLabel.setText("Good " + timeOfDayGreeting() + ", " + firstName);
 
-        BaseApiClient.ApiResult<List<ClinicStaff>> staffResult = ApiClientProvider.getInstance().clinicStaff().getAll();
-        if (staffResult.isSuccess()) staff = staffResult.getData();
-
-        BaseApiClient.ApiResult<List<Appointment>> apptResult = ApiClientProvider.getInstance().appointments().getAll();
-        if (apptResult.isSuccess()) appointments = apptResult.getData();
-
-        BaseApiClient.ApiResult<List<EmployeeAccessRequest>> requestResult =
-                ApiClientProvider.getInstance().auth().getAccessRequests("PENDING");
-        if (requestResult.isSuccess()) pendingRequests = requestResult.getData();
-
-        long nurseCount = staff.stream().filter(s -> "NURSE".equals(s.getStaffRole())).count();
-        long adminCount = staff.stream().filter(s -> "ADMIN".equals(s.getStaffRole())).count();
-        int totalStaff = doctors.size() + staff.size();
+        int totalStaff = allDoctors.size() + allStaff.size();
+        int unreadCount = (int) myNotifications.stream().filter(Notification::isUnread).count();
 
         staffCard.setValue(String.valueOf(totalStaff));
         invitesCard.setValue(String.valueOf(pendingRequests.size()));
-        appointmentsCard.setValue(String.valueOf(appointments.size()));
-        notificationsCard.setValue(loadNotificationCount());
+        appointmentsCard.setValue(String.valueOf(allAppointments.size()));
+        notificationsCard.setValue(String.valueOf(unreadCount));
 
-        renderClinicActivity(appointments);
-        renderStaffOverview(doctors.size(), (int) nurseCount, totalStaff);
-        renderOnboardingOverview(pendingRequests);
+        subtitleLabel.setText(pendingRequests.isEmpty()
+                ? "Here's an overview of today's clinic activity."
+                : "You have " + pendingRequests.size() + " pending invitation" + (pendingRequests.size() == 1 ? "" : "s") + " awaiting review.");
 
+        long nurseCount = allStaff.stream().filter(s -> "NURSE".equals(s.getStaffRole())).count();
+        doctorCountLabel.setText(String.valueOf(allDoctors.size()));
+        nurseCountLabel.setText(String.valueOf(nurseCount));
+        totalStaffLabel.setText(String.valueOf(totalStaff));
+
+        rebuildClinicActivity();
+        rebuildInvitationList();
+        rebuildRecentActivity();
     }
 
-    // Loads the notifications once for the unread count and the latest three for Recent Activity.
-    private String loadNotificationCount() {
-        int userId = SessionManager.getInstance().getUserId();
-        BaseApiClient.ApiResult<List<za.ac.cput.model.domain.Notification>> result =
-                ApiClientProvider.getInstance().notifications().findByClinicStaff(userId);
-        List<za.ac.cput.model.domain.Notification> list =
-                result.isSuccess() && result.getData() != null ? result.getData() : List.of();
-        renderRecentActivity(list);
-        return String.valueOf(list.stream().filter(za.ac.cput.model.domain.Notification::isUnread).count());
-    }
+    private void rebuildClinicActivity() {
+        activityList.removeAll();
 
-    private void renderRecentActivity(List<za.ac.cput.model.domain.Notification> notifications) {
-        List<JComponent> rows = new java.util.ArrayList<>();
-        notifications.stream()
-                .sorted(java.util.Comparator.comparing(za.ac.cput.model.domain.Notification::getNotificationDate,
-                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
-                .limit(3)
-                .forEach(n -> rows.add(activityItem(n)));
-        if (rows.isEmpty()) {
-            JLabel empty = new JLabel("No recent activity yet.");
-            empty.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-            empty.setForeground(AppTheme.TEXT_MUTED);
-            rows.add(empty);
+        LocalDate today = LocalDate.now();
+        List<Appointment> todaysAppts = allAppointments.stream()
+                .filter(a -> today.equals(a.getAppointmentDate()))
+                .sorted(Comparator.comparing(a -> a.getAppointmentTime() != null
+                        ? a.getAppointmentTime() : java.time.LocalTime.MIN))
+                .toList();
+
+        // Stats header row
+        long pending   = allAppointments.stream().filter(a -> "PENDING".equals(a.getConfirmationStatus())).count();
+        long completed = allAppointments.stream().filter(a -> "COMPLETED".equals(a.getConfirmationStatus())).count();
+        long cancelled = allAppointments.stream().filter(a -> "CANCELLED".equals(a.getConfirmationStatus())).count();
+
+        activityList.add(buildStatRow("Today's Appointments", String.valueOf(todaysAppts.size()), AppTheme.PRIMARY));
+        activityList.add(buildStatRow("Pending",    String.valueOf(pending),   AppTheme.STATUS_WARNING));
+        activityList.add(buildStatRow("Completed",  String.valueOf(completed), AppTheme.STATUS_SUCCESS));
+        activityList.add(buildStatRow("Cancelled",  String.valueOf(cancelled), AppTheme.STATUS_DANGER));
+
+        if (!todaysAppts.isEmpty()) {
+            JSeparator sep = new JSeparator();
+            sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+            sep.setForeground(AppTheme.DIVIDER);
+            activityList.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+            activityList.add(sep);
+            activityList.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+
+            for (Appointment appt : todaysAppts) {
+                activityList.add(buildAppointmentRow(appt));
+                activityList.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+            }
         }
-        replaceSectionBody(recentActivitySection, rows);
+
+        boolean empty = allAppointments.isEmpty();
+        activityEmptyLabel.setVisible(empty);
+        if (empty) activityList.add(activityEmptyLabel);
+
+        activityList.revalidate();
+        activityList.repaint();
     }
 
-    private JComponent activityItem(za.ac.cput.model.domain.Notification n) {
+    private JComponent buildStatRow(String label, String value, Color valueColor) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        row.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_XS, 0));
+
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        lbl.setForeground(AppTheme.TEXT_SECONDARY);
+
+        JLabel val = new JLabel(value);
+        val.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        val.setForeground(valueColor);
+
+        row.add(lbl, BorderLayout.WEST);
+        row.add(val, BorderLayout.EAST);
+        return row;
+    }
+
+    private JComponent buildAppointmentRow(Appointment appt) {
+        JPanel row = new JPanel(new BorderLayout(AppTheme.SPACE_SM, 2));
+        row.setOpaque(false);
+        row.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.DIVIDER),
+                BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, AppTheme.SPACE_SM, 0)
+        ));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel textCol = new JPanel();
+        textCol.setOpaque(false);
+        textCol.setLayout(new BoxLayout(textCol, BoxLayout.Y_AXIS));
+
+        String patient = appt.getPatient() != null && appt.getPatient().getName() != null
+                ? appt.getPatient().getName().getFirstName() + " " + appt.getPatient().getName().getLastName()
+                : "Unknown patient";
+        JLabel nameLabel = new JLabel(patient.trim());
+        nameLabel.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        nameLabel.setForeground(AppTheme.TEXT_PRIMARY);
+
+        String doctor = appt.getDoctor() != null && appt.getDoctor().getName() != null
+                ? "Dr. " + appt.getDoctor().getName().getLastName() : "Doctor TBD";
+        String timeStr = appt.getAppointmentTime() != null
+                ? appt.getAppointmentTime().format(java.time.format.DateTimeFormatter.ofPattern("h:mm a")) : "";
+        JLabel meta = new JLabel(doctor + (timeStr.isEmpty() ? "" : "  •  " + timeStr));
+        meta.setFont(FontManager.bodyFont(Font.PLAIN, 12));
+        meta.setForeground(AppTheme.TEXT_SECONDARY);
+
+        textCol.add(nameLabel);
+        textCol.add(meta);
+
+        row.add(textCol, BorderLayout.CENTER);
+        row.add(wrapRight(new StatusBadge(appt.getConfirmationStatus())), BorderLayout.EAST);
+
+        return row;
+    }
+
+    private void rebuildInvitationList() {
+        invitationList.removeAll();
+
+        List<EmployeeAccessRequest> requests = pendingRequests.stream()
+                .sorted(Comparator.comparing(
+                        r -> r.getRequestDate() != null ? r.getRequestDate() : java.time.LocalDateTime.MIN,
+                        Comparator.reverseOrder()))
+                .toList();
+
+        for (EmployeeAccessRequest req : requests) {
+            invitationList.add(buildInvitationRow(req));
+            invitationList.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        }
+
+        boolean empty = requests.isEmpty();
+        invitationEmptyLabel.setVisible(empty);
+        if (empty) invitationList.add(invitationEmptyLabel);
+
+        invitationList.revalidate();
+        invitationList.repaint();
+    }
+
+    private JComponent buildInvitationRow(EmployeeAccessRequest req) {
+        JPanel row = new JPanel(new BorderLayout(AppTheme.SPACE_SM, 2));
+        row.setOpaque(false);
+        row.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.DIVIDER),
+                BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, AppTheme.SPACE_SM, 0)
+        ));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel textCol = new JPanel();
+        textCol.setOpaque(false);
+        textCol.setLayout(new BoxLayout(textCol, BoxLayout.Y_AXIS));
+
+        JLabel emailLabel = new JLabel(req.getEmail() != null ? req.getEmail() : "—");
+        emailLabel.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        emailLabel.setForeground(AppTheme.TEXT_PRIMARY);
+
+        String roleText = "DOCTOR".equals(req.getRequestedUserType()) ? "Doctor"
+                : req.getRequestedStaffRole() != null ? roleDisplayName(req.getRequestedStaffRole()) : "Clinic Staff";
+        JLabel roleLabel = new JLabel(roleText);
+        roleLabel.setFont(FontManager.bodyFont(Font.PLAIN, 12));
+        roleLabel.setForeground(AppTheme.TEXT_SECONDARY);
+
+        textCol.add(emailLabel);
+        textCol.add(roleLabel);
+
+        row.add(textCol, BorderLayout.CENTER);
+        row.add(wrapRight(new StatusBadge("PENDING")), BorderLayout.EAST);
+        return row;
+    }
+
+    private void rebuildRecentActivity() {
+        recentActivityList.removeAll();
+
+        List<Notification> sorted = new ArrayList<>(myNotifications);
+        sorted.sort(Comparator.comparing(Notification::getNotificationDate,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+
+        int shown = 0;
+        for (Notification n : sorted) {
+            if (shown >= 3) break;
+            recentActivityList.add(buildActivityItem(n));
+            recentActivityList.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+            shown++;
+        }
+
+        recentActivityEmptyLabel.setVisible(shown == 0);
+        if (shown == 0) recentActivityList.add(recentActivityEmptyLabel);
+
+        recentActivityList.revalidate();
+        recentActivityList.repaint();
+    }
+
+    private JComponent buildActivityItem(Notification n) {
         JPanel item = new JPanel();
         item.setOpaque(false);
         item.setLayout(new BoxLayout(item, BoxLayout.Y_AXIS));
-        item.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
+        item.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         String text = n.getNotificationMessage() != null ? n.getNotificationMessage() : "Notification";
         JLabel message = new JLabel("<html>" + text.replace("&", "&amp;").replace("<", "&lt;") + "</html>");
         message.setFont(FontManager.bodyFont(n.isUnread() ? Font.BOLD : Font.PLAIN, 12));
         message.setForeground(AppTheme.TEXT_PRIMARY);
         message.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         JLabel when = new JLabel(za.ac.cput.ui.layout.NotificationCard.timeAgo(n.getNotificationDate()));
         when.setFont(FontManager.bodyFont(Font.PLAIN, 11));
         when.setForeground(AppTheme.TEXT_MUTED);
         when.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         item.add(message);
         item.add(when);
         return item;
     }
 
-    private void renderClinicActivity(List<Appointment> appointments) {
-        LocalDate today = LocalDate.now();
+    // -- Helpers ---------------------------------------------------------
 
-        long scheduled = appointments.stream().filter(a -> today.equals(a.getAppointmentDate())).count();
-        long pending = appointments.stream().filter(a -> "PENDING".equals(a.getConfirmationStatus())).count();
-        long completed = appointments.stream().filter(a -> "COMPLETED".equals(a.getConfirmationStatus())).count();
-        long cancelled = appointments.stream().filter(a -> "CANCELLED".equals(a.getConfirmationStatus())).count();
-
-        replaceSectionBody(clinicActivitySection, List.of(
-                new ActivityRow("Scheduled Today", String.valueOf(scheduled), AppTheme.PRIMARY),
-                new ActivityRow("Pending", String.valueOf(pending), AppTheme.STATUS_WARNING),
-                new ActivityRow("Completed", String.valueOf(completed), AppTheme.STATUS_SUCCESS),
-                new ActivityRow("Cancelled", String.valueOf(cancelled), AppTheme.STATUS_DANGER)
-        ));
+    private JComponent wrapRight(JComponent comp) {
+        JPanel wrap = new JPanel(new GridBagLayout());
+        wrap.setOpaque(false);
+        wrap.add(comp);
+        return wrap;
     }
 
-    private void renderStaffOverview(int doctorCount, int nurseCount, int totalStaff) {
-        replaceSectionBody(staffOverviewSection, List.of(
-                new ActivityRow("Doctors", String.valueOf(doctorCount), null),
-                new ActivityRow("Nurses", String.valueOf(nurseCount), null),
-                new ActivityRow("Total Staff", String.valueOf(totalStaff), AppTheme.PRIMARY)
-        ));
+    private JButton smallLinkButton(String text, Color color) {
+        JButton btn = new JButton(text);
+        AppTheme.styleLinkButton(btn);
+        btn.setForeground(color);
+        return btn;
     }
 
-    private void renderOnboardingOverview(List<EmployeeAccessRequest> pendingRequests) {
-        long doctorInvites = pendingRequests.stream().filter(r -> "DOCTOR".equals(r.getRequestedUserType())).count();
-        long nurseInvites = pendingRequests.stream().filter(r -> "CLINIC_STAFF".equals(r.getRequestedUserType())).count();
+    private String roleDisplayName(String role) {
+        return switch (role) {
+            case "NURSE" -> "Nurse";
+            case "ADMIN" -> "Admin";
+            case "RECEPTIONIST" -> "Receptionist";
+            default -> role;
+        };
+    }
 
-        replaceSectionBody(onboardingOverviewSection, List.of(
-                new ActivityRow("Doctors", String.valueOf(doctorInvites), null),
-                new ActivityRow("Nurses", String.valueOf(nurseInvites), null),
-                new ActivityRow("Total Pending", String.valueOf(pendingRequests.size()), AppTheme.STATUS_WARNING)
-        ));
+    private String timeOfDayGreeting() {
+        int hour = LocalTime.now().getHour();
+        if (hour < 12) return "Morning";
+        if (hour < 17) return "Afternoon";
+        return "Evening";
     }
 }

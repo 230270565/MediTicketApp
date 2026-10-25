@@ -1,11 +1,11 @@
 /*
  TicketDetailsDialog.java
 
- Patient dialog for ticket details
+ Patient dialog for ticket details — Stitch design system rewrite
 
  Author: Joshua Reid Adams (230317693)
 
- Date: 18th August 2026
+ Date: 25th October 2026
 */
 
 package za.ac.cput.ui.patient.components;
@@ -13,9 +13,9 @@ package za.ac.cput.ui.patient.components;
 import za.ac.cput.ui.layout.StatusTimeline;
 import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.model.domain.PatientTicket;
-import za.ac.cput.model.domain.TicketStatus;
 import za.ac.cput.ui.theme.AppTheme;
-import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,95 +26,85 @@ public class TicketDetailsDialog {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm");
 
     public static void show(Component parent, PatientTicket ticket) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 520);
+
+        // ── Header ────────────────────────────────────────────────────────────
+        body.add(StitchDialog.header(dialog, Icons.TICKET,
                 "Ticket #TK-" + String.format("%03d", ticket.getTicketId()),
-                Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(460, 480);
-        dialog.setLocationRelativeTo(parent);
+                "Consultation Record"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(18));
 
-        JPanel content = new StatusTimeline.WidthTrackingPanel(); // wraps instead of scrolling sideways
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        // ── 2×2 meta grid ────────────────────────────────────────────────────
+        JPanel grid = new JPanel(new GridLayout(2, 2, 24, 16));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-        content.add(fieldBlock("Doctor", doctorName(ticket)));
-        content.add(fieldBlock("Appointment",
-                ticket.getAppointment() != null && ticket.getAppointment().getAppointmentDate() != null
-                        ? ticket.getAppointment().getAppointmentDate() + " " +
-                        (ticket.getAppointment().getAppointmentTime() != null ? ticket.getAppointment().getAppointmentTime() : "")
-                        : "—"));
+        // Doctor
+        grid.add(StitchDialog.metaCell("DOCTOR", doctorName(ticket)));
 
-        JPanel statusValue = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
-        statusValue.setOpaque(false);
-        statusValue.add(new StatusPill(ticket.getCurrentStatus()));
-        content.add(labeledRow("Ticket Status", statusValue));
-
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
-        content.add(sectionTitle("Status History"));
-        content.add(StatusTimeline.build(ticket.getStatusHistory()));
-
-        if ("RESOLVED".equals(ticket.getCurrentStatus())) {
-            content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-            JLabel note = new JLabel("<html><i>Your consultation is complete. Check your Payments page "
-                    + "to settle any outstanding balance.</i></html>");
-            note.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-            note.setForeground(AppTheme.TEXT_SECONDARY);
-            note.setAlignmentX(Component.LEFT_ALIGNMENT);
-            content.add(note);
+        // Appointment (date + time)
+        String apptText = "—";
+        if (ticket.getAppointment() != null && ticket.getAppointment().getAppointmentDate() != null) {
+            apptText = ticket.getAppointment().getAppointmentDate().toString();
+            if (ticket.getAppointment().getAppointmentTime() != null) {
+                apptText += " " + ticket.getAppointment().getAppointmentTime();
+            }
         }
+        grid.add(StitchDialog.metaCell("APPOINTMENT", apptText));
 
-        JScrollPane scroll = new JScrollPane(content);
-        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        // Ticket Status
+        grid.add(StitchDialog.metaCell("TICKET STATUS", new StatusPill(ticket.getCurrentStatus())));
 
-        dialog.setContentPane(scroll);
-        dialog.setVisible(true);
+        // Empty 4th cell
+        JPanel empty = new JPanel();
+        empty.setOpaque(false);
+        grid.add(empty);
+
+        body.add(grid);
+        body.add(Box.createVerticalStrut(18));
+
+        // ── Status History ────────────────────────────────────────────────────
+        body.add(StitchDialog.sectionHeader(Icons.CLIPBOARD, "Status History", null));
+        body.add(Box.createVerticalStrut(8));
+        JComponent timeline = StatusTimeline.build(ticket.getStatusHistory());
+        timeline.setAlignmentX(Component.LEFT_ALIGNMENT);
+        body.add(timeline);
+
+        body.add(Box.createVerticalStrut(14));
+
+        // ── Info banner ───────────────────────────────────────────────────────
+        boolean resolved = "RESOLVED".equals(ticket.getCurrentStatus());
+        body.add(StitchDialog.banner(
+                resolved
+                        ? "Your consultation is complete. Check your Payments page to settle any outstanding balance."
+                        : "Your ticket is being processed. Check back for status updates.",
+                resolved ? AppTheme.STATUS_SUCCESS_BG : AppTheme.PRIMARY_LIGHT,
+                resolved ? AppTheme.STATUS_SUCCESS    : AppTheme.PRIMARY));
+
+        body.add(Box.createVerticalStrut(20));
+
+        // ── Footer ────────────────────────────────────────────────────────────
+        JPanel footer = StitchDialog.buttonRow();
+        JButton close = new JButton("Close");
+        AppTheme.styleActionButton(close, false, null);
+        close.addActionListener(e -> dialog.dispose());
+        footer.add(close);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
+
+        StitchDialog.packAndShow(dialog, parent, 520);
     }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private static String doctorName(PatientTicket ticket) {
         if (ticket.getAppointment() == null || ticket.getAppointment().getDoctor() == null
                 || ticket.getAppointment().getDoctor().getName() == null) return "—";
         String last = ticket.getAppointment().getDoctor().getName().getLastName();
         return "Dr. " + (last != null ? last : "—");
-    }
-
-    private static String statusBadgeText(String status) {
-        return status != null ? status.replace("_", " ") : "—";
-    }
-
-    private static JComponent fieldBlock(String label, String value) {
-        JLabel valueLabel = new JLabel(value);
-        valueLabel.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        valueLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        return labeledRow(label, valueLabel);
-    }
-
-    private static JComponent labeledRow(String label, JComponent valueComponent) {
-        JPanel block = new JPanel();
-        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
-        block.setOpaque(false);
-        block.setAlignmentX(Component.LEFT_ALIGNMENT);
-        block.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
-
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        labelComp.setForeground(AppTheme.TEXT_MUTED);
-        labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        valueComponent.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        block.add(labelComp);
-        block.add(valueComponent);
-        return block;
-    }
-
-    private static JComponent sectionTitle(String title) {
-        JLabel label = new JLabel(title);
-        label.setFont(FontManager.bodyFont(Font.BOLD, 14));
-        label.setForeground(AppTheme.TEXT_PRIMARY);
-        label.setAlignmentX(Component.LEFT_ALIGNMENT);
-        label.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, AppTheme.SPACE_XS, 0));
-        return label;
     }
 }

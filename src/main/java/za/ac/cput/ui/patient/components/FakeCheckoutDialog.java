@@ -1,11 +1,11 @@
 /*
  FakeCheckoutDialog.java
 
- Patient dialog for fake checkout
+ Patient dialog for fake checkout — Stitch design system rewrite
 
  Author: Abdullahi Raage Farah (230971091)
 
- Date: 18th August 2026
+ Date: 25th October 2026
 */
 
 package za.ac.cput.ui.patient.components;
@@ -16,6 +16,8 @@ import za.ac.cput.model.domain.Payment;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -29,16 +31,18 @@ import java.util.function.Function;
 public class FakeCheckoutDialog {
 
     public static void show(Component parent, Payment payment, Runnable onPaid) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Pay Now", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(420, 480);
-        dialog.setLocationRelativeTo(parent);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 460);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        // ── Header ────────────────────────────────────────────────────────────
+        body.add(StitchDialog.header(dialog, Icons.CARD,
+                "Pay Now",
+                "Simulated payment — no real details are transmitted"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(18));
 
+        // ── Amount display ────────────────────────────────────────────────────
         JLabel amountLabel = new JLabel("Amount Due");
         amountLabel.setFont(FontManager.bodyFont(Font.BOLD, 12));
         amountLabel.setForeground(AppTheme.TEXT_MUTED);
@@ -51,13 +55,10 @@ public class FakeCheckoutDialog {
         amountValue.setAlignmentX(Component.LEFT_ALIGNMENT);
         amountValue.setBorder(BorderFactory.createEmptyBorder(2, 0, AppTheme.SPACE_LG, 0));
 
-        JLabel disclaimer = new JLabel("<html><i>This is a simulated payment for demonstration purposes. "
-                + "No real card details are transmitted.</i></html>");
-        disclaimer.setFont(FontManager.bodyFont(Font.PLAIN, 11));
-        disclaimer.setForeground(AppTheme.TEXT_MUTED);
-        disclaimer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        disclaimer.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
+        body.add(amountLabel);
+        body.add(amountValue);
 
+        // ── Card number row ───────────────────────────────────────────────────
         JLabel cardLabel = new JLabel("Card Number");
         cardLabel.setFont(FontManager.bodyFont(Font.BOLD, 11));
         cardLabel.setForeground(AppTheme.TEXT_MUTED);
@@ -107,12 +108,12 @@ public class FakeCheckoutDialog {
         ((AbstractDocument) cvv.getDocument()).setDocumentFilter(new DigitFilter(
                 cvv, 3, digits -> digits, null));
 
-        JPanel row = new JPanel(new GridLayout(1, 2, AppTheme.SPACE_SM, 0));
-        row.setOpaque(false);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row.add(wrapWithLabel("Expiry", expiry));
-        row.add(wrapWithLabel("CVV", cvv));
+        JPanel expiryRow = new JPanel(new GridLayout(1, 2, AppTheme.SPACE_SM, 0));
+        expiryRow.setOpaque(false);
+        expiryRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        expiryRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        expiryRow.add(wrapWithLabel("Expiry", expiry));
+        expiryRow.add(wrapWithLabel("CVV", cvv));
 
         JLabel errorLabel = new JLabel(" ");
         errorLabel.setFont(FontManager.bodyFont(Font.PLAIN, 12));
@@ -120,21 +121,24 @@ public class FakeCheckoutDialog {
         errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         errorLabel.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, 0, 0));
 
+        body.add(cardHeader);
+        body.add(cardNumber);
+        body.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        body.add(expiryRow);
+        body.add(errorLabel);
+        body.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
+
+        // ── Footer / Pay button ───────────────────────────────────────────────
         JButton payButton = new JButton("Pay R" + (payment.getPaymentAmount() != null
                 ? payment.getPaymentAmount().setScale(2, RoundingMode.HALF_UP) : "0.00"));
-        payButton.setFont(FontManager.bodyFont(Font.BOLD, 14));
-        payButton.setForeground(AppTheme.TEXT_ON_PRIMARY);
-        payButton.setBackground(AppTheme.PRIMARY);
-        payButton.setFocusPainted(false);
-        payButton.setBorderPainted(false);
-        payButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        AppTheme.styleActionButton(payButton, true, null);
         payButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         payButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-        payButton.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+
         payButton.addActionListener(e -> {
             String digits = digitsOnly(cardNumber.getText());
-            String exp = expiry.getText().trim();
-            String code = cvv.getText().trim();
+            String exp    = expiry.getText().trim();
+            String code   = cvv.getText().trim();
 
             if (digits.isEmpty() && exp.isEmpty() && code.isEmpty()) {
                 errorLabel.setText("Please fill in all card details.");
@@ -172,41 +176,15 @@ public class FakeCheckoutDialog {
             }
         });
 
-        content.add(amountLabel);
-        content.add(amountValue);
-        content.add(disclaimer);
-        content.add(cardHeader);
-        content.add(cardNumber);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
-        content.add(row);
-        content.add(errorLabel);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-        content.add(payButton);
+        JPanel footer = StitchDialog.buttonRow();
+        footer.add(payButton);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        StitchDialog.packAndShow(dialog, parent, 460);
     }
 
-    private static JTextField styledField(String label, String placeholder) {
-        JPanel wrapper = new JPanel();
-        wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.Y_AXIS));
-        wrapper.setOpaque(false);
-
-        JTextField field = new JTextField();
-        field.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        field.putClientProperty("JTextField.placeholderText", placeholder);
-        field.setAlignmentX(Component.LEFT_ALIGNMENT);
-        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(AppTheme.BORDER, 1, true),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)
-        ));
-        return field;
-    }
-
-    private static JTextField styledFieldNoLabel(String placeholder) {
-        return styledField(null, placeholder);
-    }
+    // ── Static helpers ────────────────────────────────────────────────────────
 
     private static JPanel wrapWithLabel(String label, JTextField field) {
         JPanel block = new JPanel();
@@ -235,10 +213,10 @@ public class FakeCheckoutDialog {
 
         DigitFilter(JTextField field, int maxDigits,
                     Function<String, String> formatter, Consumer<String> onDigits) {
-            this.field = field;
+            this.field     = field;
             this.maxDigits = maxDigits;
             this.formatter = formatter;
-            this.onDigits = onDigits;
+            this.onDigits  = onDigits;
         }
 
         @Override
@@ -258,9 +236,9 @@ public class FakeCheckoutDialog {
             Document doc = fb.getDocument();
             String current = doc.getText(0, doc.getLength());
 
-            String head = digitsOnly(current.substring(0, offset));
+            String head     = digitsOnly(current.substring(0, offset));
             String inserted = digitsOnly(text == null ? "" : text);
-            String tail = digitsOnly(current.substring(offset + length));
+            String tail     = digitsOnly(current.substring(offset + length));
 
             String digits = head + inserted + tail;
             if (digits.length() > maxDigits) digits = digits.substring(0, maxDigits);
@@ -320,7 +298,7 @@ public class FakeCheckoutDialog {
 
         private static final int BADGE_W = 40;
         private static final int BADGE_H = 26;
-        private static final int GAP = 6;
+        private static final int GAP     = 6;
 
         private String brand;
 
@@ -371,10 +349,10 @@ public class FakeCheckoutDialog {
                         x + (BADGE_W - fm.stringWidth(text)) / 2f,
                         (BADGE_H + fm.getAscent()) / 2f - 1.5f);
             } else {
-                double d = 15;
-                double top = (BADGE_H - d) / 2.0;
+                double d      = 15;
+                double top    = (BADGE_H - d) / 2.0;
                 double centre = x + BADGE_W / 2.0;
-                Shape left = new Ellipse2D.Double(centre - d * 0.78, top, d, d);
+                Shape left  = new Ellipse2D.Double(centre - d * 0.78, top, d, d);
                 Shape right = new Ellipse2D.Double(centre - d * 0.22, top, d, d);
 
                 b.setColor(new Color(0xEB001B));

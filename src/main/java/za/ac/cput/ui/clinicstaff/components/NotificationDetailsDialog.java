@@ -1,11 +1,11 @@
 /*
  NotificationDetailsDialog.java
 
- Dialog for notification details
+ Clinicstaff notification details dialog — Stitch design system
 
  Author: Raul Jaaim Everts (230270565)
 
- Date: 11th August 2026
+ Date: 26th October 2026
 */
 
 package za.ac.cput.ui.clinicstaff.components;
@@ -15,153 +15,132 @@ import za.ac.cput.ui.layout.NotificationCard;
 import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
-//Raul Everts 230270565
+
 public class NotificationDetailsDialog {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm");
 
     public static void show(Component parent, Notification notification, String recipientName,
                             Runnable onSendFollowUp, Runnable onMarkAsRead) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Notification Details", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(460, 470);
-        dialog.setLocationRelativeTo(parent);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 540);
 
-        content.add(field("Recipient", recipientName));
-
-        // What the notification is about (stage when it was sent), e.g. "Ticket · Open".
+        // ── Header ────────────────────────────────────────────────────────────
         String[] stage = NotificationCard.stage(notification.getRelatedStatus());
-        if (stage != null) {
-            content.add(labeledRow("About", pillRow(new StatusPill(stage[0], stage[1]))));
+        String subtitle = (stage != null ? stage[0] : "Notification") + " · " + NotificationCard.channel(notification);
+        body.add(StitchDialog.header(dialog, Icons.BELL, "Notification Details", subtitle));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(18));
+
+        // ── Meta grid ─────────────────────────────────────────────────────────
+        JPanel grid = new JPanel(new GridLayout(3, 2, 24, 14));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, grid.getPreferredSize().height));
+
+        // RECIPIENT
+        String name = recipientName != null && !recipientName.isBlank() ? recipientName : "—";
+        String initials = name.length() > 0 ? String.valueOf(name.charAt(0)).toUpperCase() : "?";
+        grid.add(StitchDialog.metaCell("RECIPIENT", StitchDialog.personCell(initials, name, null, null)));
+
+        // CATEGORY
+        StatusPill categoryPill = stage != null
+                ? new StatusPill(stage[0], stage[1])
+                : new StatusPill("—", "NEUTRAL");
+        grid.add(StitchDialog.metaCell("CATEGORY", wrapPill(categoryPill)));
+
+        // DELIVERED VIA — use the existing helper which knows the channel logic
+        String channelText = NotificationCard.channel(notification);
+        JPanel channels = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        channels.setOpaque(false);
+        channels.add(StitchDialog.outlineChip("In-app", Icons.BELL));
+        if (channelText != null && channelText.contains("Email")) {
+            channels.add(StitchDialog.outlineChip("Email", Icons.MAIL));
         }
+        grid.add(StitchDialog.metaCell("DELIVERED VIA", channels));
 
-        // How it was delivered: always in-app; patients and doctors also get an email copy.
-        content.add(field("Delivered via", NotificationCard.channel(notification)));
-
-        content.add(labeledRow("Status", pillRow(notification.isUnread()
+        // STATUS
+        StatusPill statusPill = notification.isUnread()
                 ? new StatusPill("Unread", "OPEN")
-                : new StatusPill("Read", "READ"))));
+                : new StatusPill("Read", "READ");
+        grid.add(StitchDialog.metaCell("STATUS", wrapPill(statusPill)));
 
-        content.add(field("Sent", notification.getNotificationDate() != null
-                ? notification.getNotificationDate().format(DATE_FMT) : "—"));
+        // SENT DATE & TIME
+        String sentDate = notification.getNotificationDate() != null
+                ? notification.getNotificationDate().format(DATE_FMT) : "—";
+        grid.add(StitchDialog.metaCell("SENT DATE & TIME", sentDate));
 
+        // ASSOCIATED TICKET
         if (notification.getTicket() != null) {
-            content.add(field("Ticket", "TK-" + String.format("%03d", notification.getTicket().getTicketId())));
+            JComponent ticketChip = StitchDialog.chip(
+                    "#TK-" + String.format("%03d", notification.getTicket().getTicketId()));
+            grid.add(StitchDialog.metaCell("ASSOCIATED TICKET", ticketChip));
+        } else {
+            grid.add(StitchDialog.metaCell("ASSOCIATED TICKET", "—"));
         }
 
-        JLabel messageTitle = new JLabel("Message");
-        messageTitle.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        messageTitle.setForeground(AppTheme.TEXT_MUTED);
-        messageTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        messageTitle.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, 4, 0));
-        content.add(messageTitle);
+        body.add(grid);
+        body.add(Box.createVerticalStrut(20));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(14));
 
-        JTextArea messageArea = new JTextArea(notification.getNotificationMessage() != null ? notification.getNotificationMessage() : "—");
+        // ── Message Content ───────────────────────────────────────────────────
+        body.add(StitchDialog.sectionHeader(Icons.CLIPBOARD, "Message Content", null));
+        body.add(Box.createVerticalStrut(10));
+
+        JTextArea messageArea = new JTextArea(notification.getNotificationMessage() != null
+                ? notification.getNotificationMessage() : "—");
         messageArea.setFont(FontManager.bodyFont(Font.PLAIN, 14));
         messageArea.setForeground(AppTheme.TEXT_PRIMARY);
         messageArea.setLineWrap(true);
         messageArea.setWrapStyleWord(true);
         messageArea.setEditable(false);
         messageArea.setOpaque(false);
-        messageArea.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        messageArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+        messageArea.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        JScrollPane messageScroll = new JScrollPane(messageArea);
-        messageScroll.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
-        messageScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-        messageScroll.setPreferredSize(new Dimension(0, 100));
-        content.add(messageScroll);
+        body.add(StitchDialog.contentBox(messageArea));
+        body.add(Box.createVerticalStrut(20));
 
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, AppTheme.SPACE_SM, 0));
-        buttonRow.setOpaque(false);
-        buttonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // ── Footer ────────────────────────────────────────────────────────────
+        JPanel footer = StitchDialog.buttonRow();
 
         JButton close = new JButton("Close");
-        close.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        close.setFocusPainted(false);
-        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        AppTheme.styleActionButton(close, false, null);
         close.addActionListener(e -> dialog.dispose());
-        buttonRow.add(close);
+        footer.add(close);
 
         if (onSendFollowUp != null && notification.getTicket() != null) {
-            JButton followUp = new JButton("Send follow-up");
-            followUp.setFont(FontManager.bodyFont(Font.BOLD, 13));
-            followUp.setForeground(AppTheme.TEXT_ON_PRIMARY);
-            followUp.setBackground(AppTheme.PRIMARY);
-            followUp.setFocusPainted(false);
-            followUp.setBorderPainted(false);
-            followUp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            followUp.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
-            followUp.addActionListener(e -> {
-                dialog.dispose();
-                onSendFollowUp.run();
-            });
-            buttonRow.add(followUp);
+            JButton followUp = new JButton("Send Follow-up");
+            AppTheme.styleActionButton(followUp, true, Icons.MAIL);
+            followUp.addActionListener(e -> { dialog.dispose(); onSendFollowUp.run(); });
+            footer.add(followUp);
         }
 
         if (onMarkAsRead != null && !"READ".equals(notification.getNotificationStatus())) {
             JButton markRead = new JButton("Mark as Read");
-            markRead.setFont(FontManager.bodyFont(Font.BOLD, 13));
-            markRead.setForeground(AppTheme.TEXT_ON_PRIMARY);
-            markRead.setBackground(AppTheme.PRIMARY);
-            markRead.setFocusPainted(false);
-            markRead.setBorderPainted(false);
-            markRead.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            markRead.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
-            markRead.addActionListener(e -> {
-                dialog.dispose();
-                onMarkAsRead.run();
-            });
-            buttonRow.add(markRead);
+            AppTheme.styleActionButton(markRead, true, Icons.CHECK);
+            markRead.addActionListener(e -> { dialog.dispose(); onMarkAsRead.run(); });
+            footer.add(markRead);
         }
 
-        content.add(buttonRow);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        StitchDialog.packAndShow(dialog, parent, 540);
     }
 
-    private static JComponent pillRow(JComponent pill) {
+    private static JComponent wrapPill(JComponent pill) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
         row.setOpaque(false);
         row.add(pill);
         return row;
-    }
-
-    private static JComponent field(String label, String value) {
-        JLabel valueLabel = new JLabel(value != null && !value.isBlank() ? value : "—");
-        valueLabel.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        valueLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        return labeledRow(label, valueLabel);
-    }
-
-    private static JComponent labeledRow(String label, JComponent valueComponent) {
-        JPanel block = new JPanel();
-        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
-        block.setOpaque(false);
-        block.setAlignmentX(Component.LEFT_ALIGNMENT);
-        block.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
-
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        labelComp.setForeground(AppTheme.TEXT_MUTED);
-        labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        valueComponent.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        block.add(labelComp);
-        block.add(valueComponent);
-        return block;
     }
 }

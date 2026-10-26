@@ -582,7 +582,7 @@ public class DashboardPage extends JPanel implements Refreshable {
                 ? "Dr. " + appt.getDoctor().getName().getLastName() : "Doctor TBD";
         String timeStr = appt.getAppointmentTime() != null
                 ? appt.getAppointmentTime().format(java.time.format.DateTimeFormatter.ofPattern("h:mm a")) : "";
-        JLabel meta = new JLabel(doctor + (timeStr.isEmpty() ? "" : "  •  " + timeStr));
+        JLabel meta = new JLabel(doctor + (timeStr.isEmpty() ? "" : "  â€¢  " + timeStr));
         meta.setFont(FontManager.bodyFont(Font.PLAIN, 12));
         meta.setForeground(AppTheme.TEXT_SECONDARY);
 

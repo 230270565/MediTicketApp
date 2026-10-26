@@ -34,6 +34,7 @@ public class TopHeader extends JPanel {
     private JLabel avatarLabel;
     private JLabel nameLabel;
     private JLabel roleLabel;
+    private JLabel pageTitleLabel;
 
     public TopHeader() {
         this(null);
@@ -48,7 +49,13 @@ public class TopHeader extends JPanel {
         ));
         setPreferredSize(new Dimension(0, 72));
 
+        pageTitleLabel = new JLabel("");
+        pageTitleLabel.setFont(FontManager.bodyFont(Font.BOLD, 15));
+        pageTitleLabel.setForeground(AppTheme.TEXT_PRIMARY);
+        pageTitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
         add(buildProfileSection(onProfileClick), BorderLayout.WEST);
+        add(pageTitleLabel, BorderLayout.CENTER);
         add(buildRightSection(), BorderLayout.EAST);
     }
 
@@ -179,6 +186,11 @@ public class TopHeader extends JPanel {
             }
         });
         return wrapper;
+    }
+
+    /** Updates the page title shown in the center of the header. */
+    public void setPageTitle(String title) {
+        pageTitleLabel.setText(title != null ? title : "");
     }
 
     /** Unread notification count on the bell; 0 hides the bubble. */

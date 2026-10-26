@@ -523,7 +523,7 @@ public class DashboardPage extends JPanel implements Refreshable {
 
         String dateStr = appt.getAppointmentDate() != null ? appt.getAppointmentDate().format(DATE_FMT) : "Date TBD";
         String timeStr = appt.getAppointmentTime() != null ? appt.getAppointmentTime().format(TIME_FMT) : "";
-        JLabel meta = new JLabel(dateStr + (timeStr.isEmpty() ? "" : "  •  " + timeStr));
+        JLabel meta = new JLabel(dateStr + (timeStr.isEmpty() ? "" : "  â€¢  " + timeStr));
         meta.setFont(FontManager.bodyFont(Font.PLAIN, 12));
         meta.setForeground(AppTheme.TEXT_SECONDARY);
 
@@ -572,7 +572,7 @@ public class DashboardPage extends JPanel implements Refreshable {
 
         String desc = ticket.getTicketDescription() != null && !ticket.getTicketDescription().isBlank()
                 ? ticket.getTicketDescription() : "No description";
-        JLabel textLabel = new JLabel("TK-" + String.format("%03d", ticket.getTicketId()) + "  •  " + desc);
+        JLabel textLabel = new JLabel("TK-" + String.format("%03d", ticket.getTicketId()) + "  â€¢  " + desc);
         textLabel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         textLabel.setForeground(AppTheme.TEXT_PRIMARY);
 

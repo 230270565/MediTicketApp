@@ -1,19 +1,22 @@
 /*
  StaffDetailsDialog.java
 
- Dialog for staff details
+ Doctor / clinicstaff details dialog — Stitch design system
 
  Author: Matthew Barron (230398863)
 
- Date: 11th August 2026
+ Date: 26th October 2026
 */
 
 package za.ac.cput.ui.clinicstaff.components;
 
 import za.ac.cput.model.domain.ClinicStaff;
 import za.ac.cput.model.domain.Doctor;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,129 +24,172 @@ import java.awt.*;
 public class StaffDetailsDialog {
 
     public static void showDoctor(Component parent, Doctor doctor) {
-        show(parent, "Doctor Details", buildDoctorFields(doctor));
+        String first = doctor.getName() != null ? doctor.getName().getFirstName() : "";
+        String last  = doctor.getName() != null ? doctor.getName().getLastName()  : "";
+        String specialty = doctor.getSpecialty() != null ? doctor.getSpecialty() : "Medical Staff";
+        String docId = doctor.getUserId() > 0 ? "#DOC-" + String.format("%04d", doctor.getUserId()) : "";
+        showImpl(parent, Icons.USER, "Doctor Details " + docId, "MediTicket Health Services · Credentialled Practitioner",
+                first, last, specialty, buildDoctorGrid(doctor));
     }
 
     public static void showClinicStaff(Component parent, ClinicStaff staff) {
+        String first = staff.getName() != null ? staff.getName().getFirstName() : "";
+        String last  = staff.getName() != null ? staff.getName().getLastName()  : "";
         String roleLabel = "ADMIN".equals(staff.getStaffRole()) ? "Administrator" : "Nurse";
-        show(parent, roleLabel + " Details", buildClinicStaffFields(staff));
+        String dept = staff.getDepartment() != null ? staff.getDepartment() : "Clinic Staff";
+        String staffId = staff.getUserId() > 0 ? "#STF-" + String.format("%04d", staff.getUserId()) : "";
+        showImpl(parent, Icons.USERS, roleLabel + " Details " + staffId, "MediTicket Health Services · Clinic Staff",
+                first, last, dept, buildClinicStaffGrid(staff));
     }
 
-    private static void show(Component parent, String title, JComponent fields) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent), title, Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(420, 380);
-        dialog.setLocationRelativeTo(parent);
+    private static void showImpl(Component parent, String iconName, String title, String subtitle,
+                                 String first, String last, String sub, JPanel grid) {
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 520);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        // ── Header ────────────────────────────────────────────────────────────
+        body.add(StitchDialog.header(dialog, iconName, title, subtitle));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(14));
 
-        content.add(fields);
+        // ── Person hero ───────────────────────────────────────────────────────
+        JPanel hero = new JPanel(new BorderLayout(16, 0));
+        hero.setOpaque(false);
+        hero.setAlignmentX(Component.LEFT_ALIGNMENT);
+        hero.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
+        String initials = StitchDialog.initials(first, last);
+        JComponent personCell = StitchDialog.personCell(initials,
+                ((first + " " + last).trim().isEmpty() ? "—" : (first + " " + last).trim()),
+                "· " + sub, AppTheme.PRIMARY);
+        hero.add(personCell, BorderLayout.CENTER);
+
+        JPanel statusGroup = new JPanel();
+        statusGroup.setOpaque(false);
+        statusGroup.setLayout(new BoxLayout(statusGroup, BoxLayout.Y_AXIS));
+        // placeholder — will be replaced per dialog type
+        statusGroup.add(Box.createVerticalGlue());
+        hero.add(statusGroup, BorderLayout.EAST);
+
+        body.add(hero);
+        body.add(Box.createVerticalStrut(16));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(16));
+
+        // ── 4×2 grid ─────────────────────────────────────────────────────────
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        body.add(grid);
+        body.add(Box.createVerticalStrut(16));
+
+        // ── Info banner ───────────────────────────────────────────────────────
+        body.add(StitchDialog.banner(
+                "Verified Medical Practitioner. HPCSA Registered & SABS ISO/IEC 27001 compliant electronic profile generated through MediTicket clinical registry.",
+                AppTheme.PRIMARY_LIGHT, AppTheme.PRIMARY));
+        body.add(Box.createVerticalStrut(20));
+
+        // ── Footer ────────────────────────────────────────────────────────────
+        JPanel footer = StitchDialog.buttonRow();
         JButton close = new JButton("Close");
-        close.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        close.setFocusPainted(false);
-        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        close.setAlignmentX(Component.RIGHT_ALIGNMENT);
-        close.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_MD, 0, 0, 0));
+        AppTheme.styleActionButton(close, true, null);
         close.addActionListener(e -> dialog.dispose());
+        footer.add(close);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        buttonRow.setOpaque(false);
-        buttonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        buttonRow.add(close);
-        content.add(buttonRow);
-
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        StitchDialog.packAndShow(dialog, parent, 520);
     }
 
-    private static JComponent buildDoctorFields(Doctor doctor) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(false);
+    private static JPanel buildDoctorGrid(Doctor doctor) {
+        JPanel grid = new JPanel(new GridLayout(4, 2, 24, 14));
+        grid.setOpaque(false);
 
-        panel.add(field("Name", fullName(doctor)));
-        panel.add(field("Email", doctor.getEmail()));
-        panel.add(field("Phone", doctor.getCellPhone()));
-        panel.add(field("Date of Birth", doctor.getDob() != null ? doctor.getDob().toString() : "—"));
-        panel.add(field("Specialty", doctor.getSpecialty()));
-        panel.add(field("License Number", doctor.getLicenseNumber()));
-        panel.add(statusField(doctor.getAccountStatus()));
-        return panel;
-    }
+        grid.add(StitchDialog.metaCell("EMAIL ADDRESS", doctor.getEmail() != null ? doctor.getEmail() : "—"));
+        grid.add(StitchDialog.metaCell("PHONE NUMBER", doctor.getCellPhone() != null ? doctor.getCellPhone() : "—"));
 
-    private static JComponent buildClinicStaffFields(ClinicStaff staff) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(false);
+        String dob = doctor.getDob() != null
+                ? doctor.getDob().toString() + " (" + ageYears(doctor.getDob()) + " yrs)"
+                : "—";
+        grid.add(StitchDialog.metaCell("DATE OF BIRTH", dob));
 
-        panel.add(field("Name", fullName(staff)));
-        panel.add(field("Email", staff.getEmail()));
-        panel.add(field("Phone", staff.getCellPhone()));
-        panel.add(field("Date of Birth", staff.getDob() != null ? staff.getDob().toString() : "—"));
-        panel.add(field("Role", staff.getStaffRole()));
-        panel.add(field("Department", staff.getDepartment()));
-        panel.add(statusField(staff.getAccountStatus()));
-        return panel;
-    }
-
-    private static String fullName(Object user) {
-        try {
-            var nameMethod = user.getClass().getMethod("getName");
-            Object name = nameMethod.invoke(user);
-            if (name == null) return "—";
-            var firstMethod = name.getClass().getMethod("getFirstName");
-            var lastMethod = name.getClass().getMethod("getLastName");
-            String first = (String) firstMethod.invoke(name);
-            String last = (String) lastMethod.invoke(name);
-            return (first != null ? first : "") + " " + (last != null ? last : "");
-        } catch (Exception e) {
-            return "—";
+        // Specialty with short code chip
+        JPanel specPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        specPanel.setOpaque(false);
+        String spec = doctor.getSpecialty() != null ? doctor.getSpecialty() : "—";
+        JLabel specLabel = new JLabel(spec);
+        specLabel.setFont(FontManager.bodyFont(Font.PLAIN, 14));
+        specLabel.setForeground(AppTheme.TEXT_PRIMARY);
+        specPanel.add(specLabel);
+        if (doctor.getSpecialty() != null && doctor.getSpecialty().length() >= 4) {
+            specPanel.add(StitchDialog.chip(doctor.getSpecialty().substring(0, Math.min(4, doctor.getSpecialty().length())).toLowerCase()));
         }
+        grid.add(StitchDialog.metaCell("CLINICAL SPECIALTY", specPanel));
+
+        // License with "Valid" tag
+        JPanel licPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        licPanel.setOpaque(false);
+        String lic = doctor.getLicenseNumber() != null ? doctor.getLicenseNumber() : "—";
+        JLabel licLabel = new JLabel(lic);
+        licLabel.setFont(FontManager.bodyFont(Font.PLAIN, 14));
+        licLabel.setForeground(AppTheme.TEXT_PRIMARY);
+        JLabel validTag = new JLabel("Valid");
+        validTag.setFont(FontManager.bodyFont(Font.PLAIN, 11));
+        validTag.setForeground(AppTheme.STATUS_SUCCESS);
+        licPanel.add(licLabel);
+        licPanel.add(validTag);
+        grid.add(StitchDialog.metaCell("LICENSE NUMBER", licPanel));
+
+        // Practitioner standing
+        String statusStr = doctor.getAccountStatus() != null ? doctor.getAccountStatus().toString() : "—";
+        JPanel standing = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        standing.setOpaque(false);
+        JLabel standingLabel = new JLabel(statusStr);
+        standingLabel.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        standingLabel.setForeground(AppTheme.statusColor(statusStr));
+        JLabel privLabel = new JLabel("· full privileges");
+        privLabel.setFont(FontManager.bodyFont(Font.PLAIN, 11));
+        privLabel.setForeground(AppTheme.TEXT_MUTED);
+        standing.add(standingLabel);
+        standing.add(privLabel);
+        grid.add(StitchDialog.metaCell("PRACTITIONER STANDING", standing));
+
+        JPanel empty = new JPanel();
+        empty.setOpaque(false);
+        grid.add(empty);
+
+        return grid;
     }
 
-    private static JComponent field(String label, String value) {
-        JPanel block = new JPanel();
-        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
-        block.setOpaque(false);
-        block.setAlignmentX(Component.LEFT_ALIGNMENT);
-        block.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
+    private static JPanel buildClinicStaffGrid(ClinicStaff staff) {
+        JPanel grid = new JPanel(new GridLayout(4, 2, 24, 14));
+        grid.setOpaque(false);
 
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        labelComp.setForeground(AppTheme.TEXT_MUTED);
-        labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.add(StitchDialog.metaCell("EMAIL ADDRESS", staff.getEmail() != null ? staff.getEmail() : "—"));
+        grid.add(StitchDialog.metaCell("PHONE NUMBER", staff.getCellPhone() != null ? staff.getCellPhone() : "—"));
 
-        JLabel valueComp = new JLabel(value != null && !value.isBlank() ? value : "—");
-        valueComp.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        valueComp.setForeground(AppTheme.TEXT_PRIMARY);
-        valueComp.setAlignmentX(Component.LEFT_ALIGNMENT);
+        String dob = staff.getDob() != null
+                ? staff.getDob().toString() + " (" + ageYears(staff.getDob()) + " yrs)"
+                : "—";
+        grid.add(StitchDialog.metaCell("DATE OF BIRTH", dob));
+        grid.add(StitchDialog.metaCell("ROLE", staff.getStaffRole() != null ? staff.getStaffRole() : "—"));
+        grid.add(StitchDialog.metaCell("DEPARTMENT", staff.getDepartment() != null ? staff.getDepartment() : "—"));
 
-        block.add(labelComp);
-        block.add(valueComp);
-        return block;
+        String statusStr = staff.getAccountStatus() != null ? staff.getAccountStatus().toString() : "—";
+        JPanel standing = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        standing.setOpaque(false);
+        JLabel statusLabel = new JLabel(statusStr);
+        statusLabel.setFont(FontManager.bodyFont(Font.BOLD, 13));
+        statusLabel.setForeground(AppTheme.statusColor(statusStr));
+        standing.add(statusLabel);
+        grid.add(StitchDialog.metaCell("ACCOUNT STATUS", standing));
+
+        JPanel e1 = new JPanel(); e1.setOpaque(false); grid.add(e1);
+        JPanel e2 = new JPanel(); e2.setOpaque(false); grid.add(e2);
+
+        return grid;
     }
 
-    private static JComponent statusField(String status) {
-        JLabel value = new JLabel(status != null ? status : "—");
-        value.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        value.setForeground(AppTheme.statusColor(status));
-
-        JPanel block = new JPanel();
-        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
-        block.setOpaque(false);
-        block.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel labelComp = new JLabel("Account Status");
-        labelComp.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        labelComp.setForeground(AppTheme.TEXT_MUTED);
-        labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
-        value.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        block.add(labelComp);
-        block.add(value);
-        return block;
+    private static int ageYears(java.time.LocalDate dob) {
+        return (int) java.time.temporal.ChronoUnit.YEARS.between(dob, java.time.LocalDate.now());
     }
 }

@@ -9,6 +9,7 @@
 */
 
 package za.ac.cput.ui.clinicstaff.admin.pages;
+import za.ac.cput.ui.layout.Paginator;
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
@@ -30,13 +31,14 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM, HH:mm");
 
-    // ══════════════════════════════ HISTORY ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HISTORY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     private static final String TICKET_PLACEHOLDER = "-- Select a ticket --";
     private static final String RECIPIENT_PLACEHOLDER = "-- Select a recipient --";
     private static final String TYPE_PLACEHOLDER = "-- Select notification type --";
+    private final Paginator paginator = new Paginator("notifications", this::renderHistory);
     private JPanel historyList;
 
-    // ══════════════════════════════ CONSTANTS ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CONSTANTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     private String activeFilter = "ALL";
     private JPanel filterBarContainer;
     private List<Notification> allNotifications = List.of();
@@ -57,7 +59,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         loadHistory();
     }
 
-    // ══════════════════════════════ MAIN PAGE ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MAIN PAGE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private JComponent buildMainPanel() {
 
@@ -164,6 +166,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         scroll.getVerticalScrollBar().setUnitIncrement(16);
 
+
         scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         panel.add(scroll);
@@ -171,7 +174,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         return panel;
     }
 
-    // ══════════════════════════════ FILTERS ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FILTERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private JComponent buildFilterBar() {
 
@@ -194,6 +197,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
             btn.addActionListener(e -> {
 
                 activeFilter = f[0];
+                paginator.reset();
 
                 renderHistory();
 
@@ -211,7 +215,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         return bar;
     }
 
-    // ══════════════════════════════ LOAD HISTORY ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• LOAD HISTORY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private void loadHistory() {
 
@@ -236,8 +240,12 @@ public class NotificationsPage extends JPanel implements Refreshable {
         historyList.removeAll();
 
         List<Notification> filtered = allNotifications.stream().filter(this::matchesFilter).collect(Collectors.toList());
+        paginator.setTotal(filtered.size());
+        int _from = paginator.getOffset();
+        int _to   = Math.min(_from + paginator.getPageSize(), filtered.size());
+        List<Notification> page = filtered.isEmpty() ? filtered : filtered.subList(_from, _to);
 
-        if (filtered.isEmpty()) {
+        if (page.isEmpty()) {
 
             JLabel empty = new JLabel("No notifications yet.");
 
@@ -253,7 +261,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         } else {
 
-            for (Notification n : filtered) {
+            for (Notification n : page) {
 
                 historyList.add(buildHistoryCard(n));
 
@@ -279,7 +287,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         };
     }
 
-    // ══════════════════════════════ HISTORY CARD ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HISTORY CARD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private JComponent buildHistoryCard(Notification n) {
 
@@ -355,7 +363,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         return card;
     }
 
-    // ══════════════════════════════ RECIPIENT NAME ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RECIPIENT NAME â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private String recipientName(Notification n) {
 
@@ -382,7 +390,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         return "Unknown";
     }
 
-    // ══════════════════════════════ FEEDBACK POPUP ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FEEDBACK POPUP â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     // Send Feedback popup. Any ticket can be picked, closed ones too.
     private void openFeedbackPopup() {
@@ -404,7 +412,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         dialog.setVisible(true);
     }
 
-    // ══════════════════════════════ FEEDBACK FORM ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FEEDBACK FORM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private JPanel buildFeedbackPanel(JDialog dialog) {
 
@@ -440,7 +448,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(note);
 
-        // ══════════════════════════════ TICKET ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TICKET â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         panel.add(fieldLabel("Ticket"));
 
@@ -468,7 +476,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
 
-        // ══════════════════════════════ RECIPIENT ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RECIPIENT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         panel.add(fieldLabel("Recipient"));
 
@@ -480,7 +488,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
 
-        // ══════════════════════════════ TYPE ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TYPE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         panel.add(fieldLabel("Notification Type"));
 
@@ -492,7 +500,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
 
-        // ══════════════════════════════ MESSAGE ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MESSAGE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         panel.add(fieldLabel("Message"));
 
@@ -513,7 +521,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(messageScroll);
 
-        // ══════════════════════════════ ERROR ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ERROR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         JLabel errorLabel = new JLabel(" ");
 
@@ -527,7 +535,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         panel.add(errorLabel);
 
-        // ══════════════════════════════ BUTTONS ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• BUTTONS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, AppTheme.SPACE_SM, 0));
 
@@ -558,7 +566,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         sendButton.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
 
-        // ══════════════════════════════ LOAD TICKETS ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• LOAD TICKETS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         BaseApiClient.ApiResult<List<PatientTicket>> ticketResult = ApiClientProvider.getInstance().patientTickets().getAll();
 
@@ -583,7 +591,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
             }
         }
 
-        // ══════════════════════════════ TICKET CHANGE ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TICKET CHANGE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         ticketCombo.addActionListener(e -> {
 
@@ -606,7 +614,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
             ticketCombo.setSelectedIndex(0);
         }
 
-        // ══════════════════════════════ SEND ══════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SEND â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         sendButton.addActionListener(e -> {
 
@@ -709,7 +717,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         return panel;
     }
 
-    // ══════════════════════════════ RECIPIENT OPTIONS ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RECIPIENT OPTIONS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private void refreshRecipientOptions(JComboBox<PatientTicket> ticketCombo, JComboBox<String> recipientCombo) {
 
@@ -755,7 +763,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         }
     }
 
-    // ══════════════════════════════ FOLLOW-UP FROM DETAILS ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FOLLOW-UP FROM DETAILS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     // Follow-up from the details popup, starts on the same ticket as the notification.
     private void prefillFollowUp(Notification original) {
@@ -784,7 +792,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         dialog.setVisible(true);
     }
 
-    // ══════════════════════════════ FOLLOW-UP FORM ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FOLLOW-UP FORM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private JPanel buildFollowUpPanel(Notification original, JDialog dialog) {
 
@@ -1072,7 +1080,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         return panel;
     }
 
-    // ══════════════════════════════ HELPERS ══════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HELPERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private JLabel fieldLabel(String text) {
 
@@ -1123,7 +1131,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
 
         String patientName = appt.getPatient() != null ? fullName(appt.getPatient().getName()) : "—";
 
-        return patientName + " · " + (t.getCurrentStatus() != null ? t.getCurrentStatus() : "—");
+        return patientName + " Â· " + (t.getCurrentStatus() != null ? t.getCurrentStatus() : "—");
     }
 
     private String fullName(Object name) {

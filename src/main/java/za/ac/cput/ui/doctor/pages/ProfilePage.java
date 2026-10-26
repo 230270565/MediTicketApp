@@ -21,6 +21,9 @@ import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.AvatarManager;
 import za.ac.cput.ui.theme.FontManager;
 
+import com.github.lgooddatepicker.components.DatePicker;
+import com.github.lgooddatepicker.components.DatePickerSettings;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -31,7 +34,8 @@ public class ProfilePage extends JPanel {
     private Doctor currentDoctor;
     private JLabel avatarLabel;
 
-    private LabeledTextField firstNameField, middleNameField, lastNameField, phoneField, dobField, specialtyField;
+    private LabeledTextField firstNameField, middleNameField, lastNameField, phoneField, specialtyField;
+    private DatePicker dobPicker;
 
     private JLabel emailValueLabel;
     private JLabel licenseValueLabel;
@@ -183,12 +187,14 @@ public class ProfilePage extends JPanel {
         middleNameField = new LabeledTextField("Middle Name");
         lastNameField = new LabeledTextField("Last Name");
         phoneField = new LabeledTextField("Phone");
-        dobField = new LabeledTextField("Date of Birth (yyyy-mm-dd)");
+        DatePickerSettings dobSettings = new DatePickerSettings();
+        dobPicker = new DatePicker(dobSettings);
+        dobPicker.setAlignmentX(Component.LEFT_ALIGNMENT);
         specialtyField = new LabeledTextField("Specialty");
 
         card.add(row(firstNameField, middleNameField, lastNameField));
         card.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-        card.add(row(phoneField, dobField, specialtyField));
+        card.add(row(phoneField, wrapDatePicker("Date of Birth", dobPicker), specialtyField));
         card.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
 
         JLabel accountInfoTitle = new JLabel("Account Information");
@@ -218,6 +224,23 @@ public class ProfilePage extends JPanel {
         card.add(saveButton);
 
         return card;
+    }
+
+    private static JComponent wrapDatePicker(String label, DatePicker picker) {
+        JPanel block = new JPanel();
+        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
+        block.setOpaque(false);
+        block.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(FontManager.bodyFont(Font.BOLD, 11));
+        lbl.setForeground(AppTheme.TEXT_MUTED);
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
+        picker.setAlignmentX(Component.LEFT_ALIGNMENT);
+        picker.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        block.add(lbl);
+        block.add(picker);
+        return block;
     }
 
     private JPanel row(JComponent... fields) {
@@ -308,7 +331,7 @@ public class ProfilePage extends JPanel {
             lastNameField.getField().setText(currentDoctor.getName().getLastName());
         }
         phoneField.getField().setText(currentDoctor.getCellPhone());
-        dobField.getField().setText(currentDoctor.getDob() != null ? currentDoctor.getDob().toString() : "");
+        dobPicker.setDate(currentDoctor.getDob());
         specialtyField.getField().setText(currentDoctor.getSpecialty());
 
         emailValueLabel.setText(currentDoctor.getEmail() != null ? currentDoctor.getEmail() : "\u2014");
@@ -319,26 +342,17 @@ public class ProfilePage extends JPanel {
 
     private void setFormEnabled(boolean enabled) {
         for (LabeledTextField field : new LabeledTextField[]{
-                firstNameField, middleNameField, lastNameField, phoneField, dobField, specialtyField}) {
+                firstNameField, middleNameField, lastNameField, phoneField, specialtyField}) {
             field.getField().setEnabled(enabled);
         }
+        dobPicker.setEnabled(enabled);
         saveButton.setEnabled(enabled);
     }
 
     private void saveChanges() {
         if (currentDoctor == null) return;
 
-        LocalDate dob = null;
-        String dobText = dobField.getField().getText().trim();
-        if (!dobText.isEmpty()) {
-            try {
-                dob = LocalDate.parse(dobText);
-            } catch (Exception ex) {
-                AppDialog.show(this, "Invalid Date",
-                        "Please enter the date of birth as yyyy-mm-dd.", AppDialog.Type.ERROR);
-                return;
-            }
-        }
+        LocalDate dob = dobPicker.getDate();
 
         Name updatedName = new Name();
         updatedName.setFirstName(firstNameField.getField().getText().trim());

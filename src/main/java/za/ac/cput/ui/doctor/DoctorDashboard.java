@@ -99,6 +99,15 @@ public class DoctorDashboard extends JPanel {
 
     private void showPage(String key) {
         pageLayout.show(pageContainer, key);
+        topHeader.setPageTitle(switch (key) {
+            case PAGE_HOME          -> "Dashboard";
+            case PAGE_APPOINTMENTS  -> "Appointments";
+            case PAGE_TICKETS       -> "Tickets";
+            case PAGE_PATIENTS      -> "Patients";
+            case PAGE_NOTIFICATIONS -> "Notifications";
+            case PAGE_PROFILE       -> "Profile";
+            default                 -> "";
+        });
         if (live != null) live.pageOpened();
     }
 

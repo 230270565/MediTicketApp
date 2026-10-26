@@ -17,6 +17,7 @@ import za.ac.cput.model.domain.Appointment;
 import za.ac.cput.model.domain.Payment;
 import za.ac.cput.ui.clinicstaff.components.PaymentDetailsDialog;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
+import za.ac.cput.ui.layout.Paginator;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.Icons;
@@ -37,6 +38,7 @@ public class PaymentsPage extends JPanel implements Refreshable {
     private DefaultTableModel tableModel;
     private JTable paymentsTable;
 
+    private final Paginator paginator = new Paginator("payments", this::renderTable);
     private List<Payment> allPayments = List.of();
     private String activeFilter = "ALL";
     private JPanel filterBarContainer;
@@ -67,6 +69,8 @@ public class PaymentsPage extends JPanel implements Refreshable {
 
         content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
         content.add(buildTable());
+        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        content.add(paginator);
 
         JScrollPane scroll = new JScrollPane(content);
         scroll.setBorder(null);
@@ -146,6 +150,7 @@ public class PaymentsPage extends JPanel implements Refreshable {
             AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
+                paginator.reset();
                 renderTable();
                 filterBarContainer.removeAll();
                 filterBarContainer.add(buildFilterBar(), BorderLayout.WEST);
@@ -179,7 +184,6 @@ public class PaymentsPage extends JPanel implements Refreshable {
         RowClickHelper.makeRowsClickable(paymentsTable, 6, this::onRowClicked);
 
         JScrollPane scroll = new JScrollPane(paymentsTable);
-        scroll.setPreferredSize(new Dimension(0, 380));
         scroll.setBorder(BorderFactory.createLineBorder(AppTheme.DIVIDER));
         scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         return scroll;
@@ -280,6 +284,7 @@ public class PaymentsPage extends JPanel implements Refreshable {
         viewButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         viewButton.addActionListener(e -> {
             activeFilter = filterOnClick;
+            paginator.reset();
             renderTable();
             filterBarContainer.removeAll();
             filterBarContainer.add(buildFilterBar(), BorderLayout.WEST);
@@ -296,8 +301,13 @@ public class PaymentsPage extends JPanel implements Refreshable {
         tableModel.setRowCount(0);
 
         List<Payment> filtered = "ALL".equals(activeFilter)
-                ? allPayments
+                ? new java.util.ArrayList<>(allPayments)
                 : allPayments.stream().filter(p -> activeFilter.equals(p.getPaymentStatus())).collect(Collectors.toList());
+
+        paginator.setTotal(filtered.size());
+        int _from = paginator.getOffset();
+        int _to   = Math.min(_from + paginator.getPageSize(), filtered.size());
+        filtered  = filtered.subList(_from, _to);
 
         for (Payment payment : filtered) {
             tableModel.addRow(new Object[]{

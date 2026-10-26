@@ -17,6 +17,7 @@ import za.ac.cput.model.domain.Appointment;
 import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
 import za.ac.cput.ui.doctor.components.AppointmentDetailsDialog;
+import za.ac.cput.ui.layout.Paginator;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
@@ -34,6 +35,7 @@ public class AppointmentsPage extends JPanel implements Refreshable {
     private DefaultTableModel tableModel;
     private JTable appointmentsTable;
 
+    private final Paginator paginator = new Paginator("appointments", this::renderTable);
     private List<Appointment> myAppointments = List.of();
     private String activeFilter = "ALL";
     private JPanel filterBarContainer;
@@ -61,6 +63,8 @@ public class AppointmentsPage extends JPanel implements Refreshable {
 
         content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
         content.add(buildTable());
+        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        content.add(paginator);
 
         JScrollPane scroll = new JScrollPane(content);
         scroll.setBorder(null);
@@ -130,6 +134,7 @@ public class AppointmentsPage extends JPanel implements Refreshable {
             AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
+                paginator.reset();
                 renderTable();
                 filterBarContainer.removeAll();
                 filterBarContainer.add(buildFilterBar(), BorderLayout.WEST);
@@ -163,7 +168,6 @@ public class AppointmentsPage extends JPanel implements Refreshable {
         RowClickHelper.makeRowsClickable(appointmentsTable, 5, this::onRowClicked);
 
         JScrollPane scroll = new JScrollPane(appointmentsTable);
-        scroll.setPreferredSize(new Dimension(0, 400));
         scroll.setBorder(BorderFactory.createLineBorder(AppTheme.DIVIDER));
         scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         return scroll;
@@ -212,6 +216,11 @@ public class AppointmentsPage extends JPanel implements Refreshable {
     private void renderTable() {
         tableModel.setRowCount(0);
         List<Appointment> filtered = currentFilteredRows();
+
+        paginator.setTotal(filtered.size());
+        int _from = paginator.getOffset();
+        int _to   = Math.min(_from + paginator.getPageSize(), filtered.size());
+        filtered  = filtered.subList(_from, _to);
 
         for (Appointment a : filtered) {
             tableModel.addRow(new Object[]{

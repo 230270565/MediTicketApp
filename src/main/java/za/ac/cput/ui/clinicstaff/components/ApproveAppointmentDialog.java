@@ -1,23 +1,25 @@
 /*
  ApproveAppointmentDialog.java
 
- Dialog for approve appointment
+ Approve appointment dialog — Stitch design system
 
  Author: Joshua Reid Adams (230317693)
 
- Date: 11th August 2026
+ Date: 26th October 2026
 */
 
 package za.ac.cput.ui.clinicstaff.components;
+
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Appointment;
 import za.ac.cput.model.domain.Doctor;
 import za.ac.cput.session.SessionManager;
-import za.ac.cput.ui.auth.components.PrimaryButton;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,31 +28,27 @@ import java.util.List;
 public class ApproveAppointmentDialog {
 
     public static void show(Component parent, Appointment appointment, Runnable onApproved) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Approve Appointment", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(420, 260);
-        dialog.setLocationRelativeTo(parent);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 480);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        // ── Header ────────────────────────────────────────────────────────────
+        body.add(StitchDialog.header(dialog, Icons.CHECK, "Approve Appointment",
+                "Assign a doctor and confirm"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(16));
 
-        JLabel subtitle = new JLabel("<html>Select the doctor to assign to this appointment. "
-                + "The patient and clinic will be notified once approved.</html>");
-        subtitle.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        subtitle.setForeground(AppTheme.TEXT_SECONDARY);
-        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        subtitle.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
+        // ── Info note ─────────────────────────────────────────────────────────
+        body.add(StitchDialog.infoBanner(
+                "Select a doctor to assign. The patient will be notified once confirmed."));
+        body.add(Box.createVerticalStrut(14));
 
-        JLabel doctorLabel = new JLabel("Doctor");
-        doctorLabel.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        doctorLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        doctorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // ── Doctor dropdown ───────────────────────────────────────────────────
+        body.add(StitchDialog.fieldLabel("Doctor"));
+        body.add(Box.createVerticalStrut(6));
 
         JComboBox<Doctor> doctorCombo = new JComboBox<>();
         doctorCombo.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        doctorCombo.setPreferredSize(new Dimension(0, 42));
         doctorCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
         doctorCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         doctorCombo.setRenderer(new DefaultListCellRenderer() {
@@ -69,37 +67,31 @@ public class ApproveAppointmentDialog {
         });
 
         BaseApiClient.ApiResult<List<Doctor>> doctorResult = ApiClientProvider.getInstance().doctors().getAll();
-        if (doctorResult.isSuccess()) {
+        if (doctorResult.isSuccess() && doctorResult.getData() != null) {
             for (Doctor doctor : doctorResult.getData()) {
                 doctorCombo.addItem(doctor);
             }
         }
+        body.add(doctorCombo);
 
-        JLabel errorLabel = new JLabel(" ");
-        errorLabel.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-        errorLabel.setForeground(AppTheme.STATUS_DANGER);
-        errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        errorLabel.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, 0, 0));
+        // ── Error label ───────────────────────────────────────────────────────
+        JLabel errorLabel = StitchDialog.errorLabel();
+        body.add(errorLabel);
+        body.add(Box.createVerticalStrut(16));
 
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, AppTheme.SPACE_SM, 0));
-        buttonRow.setOpaque(false);
-        buttonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        buttonRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        buttonRow.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_MD, 0, 0, 0));
+        // ── Footer ────────────────────────────────────────────────────────────
+        JPanel footer = StitchDialog.buttonRow();
 
         JButton cancel = new JButton("Cancel");
-        cancel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        cancel.setFocusPainted(false);
+        AppTheme.styleActionButton(cancel, false, null);
         cancel.addActionListener(e -> dialog.dispose());
+        footer.add(cancel);
 
-        PrimaryButton confirm = new PrimaryButton("Approve Appointment");
-        confirm.setPreferredSize(new Dimension(200, 42));
+        JButton confirm = new JButton("Approve Appointment");
+        AppTheme.styleActionButton(confirm, true, Icons.CHECK);
         confirm.addActionListener(e -> {
             Doctor selected = (Doctor) doctorCombo.getSelectedItem();
-            if (selected == null) {
-                errorLabel.setText("Please select a doctor.");
-                return;
-            }
+            if (selected == null) { errorLabel.setText("Please select a doctor."); return; }
 
             int staffId = SessionManager.getInstance().getUserId();
             BaseApiClient.ApiResult<Appointment> result = ApiClientProvider.getInstance()
@@ -114,18 +106,12 @@ public class ApproveAppointmentDialog {
                 errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Unable to approve appointment.");
             }
         });
+        footer.add(confirm);
 
-        buttonRow.add(cancel);
-        buttonRow.add(confirm);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        content.add(subtitle);
-        content.add(doctorLabel);
-        content.add(doctorCombo);
-        content.add(errorLabel);
-        content.add(buttonRow);
-
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        StitchDialog.packAndShow(dialog, parent, 480);
     }
 
     private static String safe(String s) { return s != null ? s : ""; }

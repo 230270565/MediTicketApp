@@ -1,11 +1,11 @@
 /*
  AccessRequestDetailsDialog.java
 
- Dialog for access request details
+ Access request details dialog — Stitch design system
 
  Author: Matthew Barron (230398863)
 
- Date: 24th August 2026
+ Date: 26th October 2026
 */
 
 package za.ac.cput.ui.clinicstaff.components;
@@ -13,84 +13,156 @@ package za.ac.cput.ui.clinicstaff.components;
 import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.auth.EmployeeAccessRequest;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
 
 public class AccessRequestDetailsDialog {
 
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd (EEEE)");
+
     public static void show(Component parent, EmployeeAccessRequest request, Runnable onChanged) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Access Request Details", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(420, 420);
-        dialog.setLocationRelativeTo(parent);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 520);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        // ── Header ────────────────────────────────────────────────────────────
+        String reqId = request.getRequestId() > 0
+                ? "#REQ-" + request.getRequestDate().toLocalDate().toString() : "";
+        body.add(StitchDialog.header(dialog, Icons.USER, "Access Request " + reqId,
+                "MediTicket Health Services · Credential Verification Protocol"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(14));
 
-        content.add(field("Email", request.getEmail()));
-        content.add(field("Requested Role", requestedRoleLabel(request)));
-        content.add(field("Requested", request.getRequestDate() != null
-                ? request.getRequestDate().toLocalDate().toString() : "—"));
+        // ── Applicant hero ────────────────────────────────────────────────────
+        String email = request.getEmail() != null ? request.getEmail() : "—";
+        String initials = email.length() > 0 ? String.valueOf(email.charAt(0)).toUpperCase() : "?";
+        // Use first two chars of the email local-part as initials
+        int at = email.indexOf('@');
+        String localPart = at > 0 ? email.substring(0, at) : email;
+        if (localPart.length() >= 2) initials = localPart.substring(0, 2).toUpperCase();
 
-        JLabel statusValue = new JLabel(request.getStatus() != null ? request.getStatus() : "—");
-        statusValue.setFont(FontManager.bodyFont(Font.BOLD, 14));
-        statusValue.setForeground(AppTheme.statusColor(request.getStatus()));
-        content.add(labeledRow("Status", statusValue));
+        JPanel hero = new JPanel(new BorderLayout(16, 0));
+        hero.setOpaque(false);
+        hero.setAlignmentX(Component.LEFT_ALIGNMENT);
+        hero.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+
+        String roleLabel = requestedRoleLabel(request);
+        String branchLabel = "Credential Application · Quiet Branch Practice";
+        JComponent personCell = StitchDialog.personCell(initials, applicantName(request), "· " + branchLabel, AppTheme.PRIMARY);
+        hero.add(personCell, BorderLayout.CENTER);
 
         boolean isPending = "PENDING".equals(request.getStatus());
+        String statusStr = request.getStatus() != null ? request.getStatus() : "—";
+        StatusPill statusPill = isPending
+                ? new StatusPill("PENDING", "PENDING")
+                : new StatusPill(statusStr, statusStr);
 
-        if (isPending) {
-            content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
+        JPanel statusGroup = new JPanel();
+        statusGroup.setOpaque(false);
+        statusGroup.setLayout(new BoxLayout(statusGroup, BoxLayout.Y_AXIS));
+        statusGroup.add(statusPill);
+        JLabel awaitingLabel = new JLabel(isPending ? "Awaiting Clearance" : "");
+        awaitingLabel.setFont(FontManager.bodyFont(Font.PLAIN, 11));
+        awaitingLabel.setForeground(AppTheme.TEXT_MUTED);
+        awaitingLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        statusGroup.add(Box.createVerticalStrut(4));
+        statusGroup.add(awaitingLabel);
+        hero.add(statusGroup, BorderLayout.EAST);
 
-            JLabel note = new JLabel("<html><i>Approving sends an invitation email to this address.</i></html>");
-            note.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-            note.setForeground(AppTheme.TEXT_MUTED);
-            note.setAlignmentX(Component.LEFT_ALIGNMENT);
-            note.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
-            content.add(note);
+        body.add(hero);
+        body.add(Box.createVerticalStrut(16));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(16));
 
-            JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.LEFT, AppTheme.SPACE_SM, 0));
-            actionRow.setOpaque(false);
-            actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // ── 3×2 meta grid ────────────────────────────────────────────────────
+        JPanel grid = new JPanel(new GridLayout(3, 2, 24, 14));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            JButton approveButton = actionButton("Approve", AppTheme.STATUS_SUCCESS);
-            approveButton.addActionListener(e -> approve(dialog, parent, request, onChanged));
+        grid.add(StitchDialog.metaCell("APPLICANT EMAIL", email));
 
-            JButton rejectButton = actionButton("Reject", AppTheme.STATUS_DANGER);
-            rejectButton.addActionListener(e -> reject(dialog, parent, request, onChanged));
-
-            actionRow.add(approveButton);
-            actionRow.add(rejectButton);
-            content.add(actionRow);
-        } else if (request.getAdminNotes() != null && !request.getAdminNotes().isBlank()) {
-            content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
-            content.add(field("Admin Notes", request.getAdminNotes()));
+        JPanel rolePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        rolePanel.setOpaque(false);
+        JLabel roleLbl = new JLabel(roleLabel);
+        roleLbl.setFont(FontManager.bodyFont(Font.PLAIN, 14));
+        roleLbl.setForeground(AppTheme.TEXT_PRIMARY);
+        rolePanel.add(roleLbl);
+        if (request.getRequestedStaffRole() != null) {
+            rolePanel.add(StitchDialog.chip(request.getRequestedStaffRole()));
         }
+        grid.add(StitchDialog.metaCell("REQUESTED ROLE", rolePanel));
+
+        String reqDate = request.getRequestDate() != null
+                ? request.getRequestDate().toLocalDate().format(DATE_FMT) : "—";
+        grid.add(StitchDialog.metaCell("DATE REQUESTED", reqDate));
+
+        JPanel authScope = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        authScope.setOpaque(false);
+        JLabel scopeStatus = new JLabel(isPending ? "⚠ Pending Review" : (request.getStatus() != null ? request.getStatus() : "—"));
+        scopeStatus.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        scopeStatus.setForeground(isPending ? new java.awt.Color(0xB45309) : AppTheme.statusColor(request.getStatus()));
+        authScope.add(scopeStatus);
+        grid.add(StitchDialog.metaCell("AUTHORIZATION SCOPE", authScope));
+
+        grid.add(StitchDialog.metaCell("REQUEST ID", "#REQ-" + request.getRequestId()));
+        grid.add(new JPanel() {{ setOpaque(false); }});
+
+        body.add(grid);
+        body.add(Box.createVerticalStrut(16));
+
+        // ── System action banner ──────────────────────────────────────────────
+        body.add(StitchDialog.banner(
+                "System Action: Approving sends an invitation email to this address with cryptographic onboarding credentials and clinic access permissions.",
+                AppTheme.PRIMARY_LIGHT, AppTheme.PRIMARY));
+        body.add(Box.createVerticalStrut(16));
+
+        // ── Footer ────────────────────────────────────────────────────────────
+        JPanel footer = StitchDialog.buttonRow();
 
         JButton close = new JButton("Close");
-        close.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        close.setFocusPainted(false);
-        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        close.setAlignmentX(Component.LEFT_ALIGNMENT);
-        close.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_MD, 0, 0, 0));
+        AppTheme.styleActionButton(close, false, null);
         close.addActionListener(e -> dialog.dispose());
+        footer.add(close);
 
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        buttonRow.setOpaque(false);
-        buttonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        buttonRow.add(close);
-        content.add(Box.createVerticalGlue());
-        content.add(buttonRow);
+        if (isPending) {
+            JButton rejectButton = new JButton("✕ Reject Request");
+            rejectButton.setFont(FontManager.bodyFont(Font.BOLD, 13));
+            rejectButton.setForeground(AppTheme.TEXT_ON_PRIMARY);
+            rejectButton.setBackground(AppTheme.STATUS_DANGER);
+            rejectButton.setBorderPainted(false);
+            rejectButton.setFocusPainted(false);
+            rejectButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            rejectButton.putClientProperty("FlatLaf.style", "arc: 10; focusWidth: 0; innerFocusWidth: 0; margin: 9,16,9,16;");
+            rejectButton.addActionListener(e -> reject(dialog, parent, request, onChanged));
+            footer.add(rejectButton);
 
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+            JButton approveButton = new JButton("✓ Approve Request");
+            approveButton.setFont(FontManager.bodyFont(Font.BOLD, 13));
+            approveButton.setForeground(AppTheme.TEXT_ON_PRIMARY);
+            approveButton.setBackground(AppTheme.STATUS_SUCCESS);
+            approveButton.setBorderPainted(false);
+            approveButton.setFocusPainted(false);
+            approveButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            approveButton.putClientProperty("FlatLaf.style", "arc: 10; focusWidth: 0; innerFocusWidth: 0; margin: 9,16,9,16;");
+            approveButton.addActionListener(e -> approve(dialog, parent, request, onChanged));
+            footer.add(approveButton);
+        }
+
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
+
+        StitchDialog.packAndShow(dialog, parent, 520);
     }
+
+    // ── Business logic (unchanged) ────────────────────────────────────────────
 
     private static void approve(JDialog dialog, Component parent, EmployeeAccessRequest request, Runnable onChanged) {
         int confirm = JOptionPane.showConfirmDialog(dialog,
@@ -137,41 +209,22 @@ public class AccessRequestDetailsDialog {
         return userType != null ? userType : "—";
     }
 
-    private static JButton actionButton(String text, Color color) {
-        JButton button = new JButton(text);
-        button.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        button.setForeground(AppTheme.TEXT_ON_PRIMARY);
-        button.setBackground(color);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createEmptyBorder(6, 14, 6, 14));
-        return button;
-    }
-
-    private static JComponent field(String label, String value) {
-        JLabel valueLabel = new JLabel(value != null && !value.isBlank() ? value : "—");
-        valueLabel.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        valueLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        return labeledRow(label, valueLabel);
-    }
-
-    private static JComponent labeledRow(String label, JComponent valueComponent) {
-        JPanel block = new JPanel();
-        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
-        block.setOpaque(false);
-        block.setAlignmentX(Component.LEFT_ALIGNMENT);
-        block.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
-
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        labelComp.setForeground(AppTheme.TEXT_MUTED);
-        labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        valueComponent.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        block.add(labelComp);
-        block.add(valueComponent);
-        return block;
+    private static String applicantName(EmployeeAccessRequest request) {
+        String email = request.getEmail();
+        if (email == null) return "Unknown Applicant";
+        int at = email.indexOf('@');
+        if (at <= 0) return email;
+        String local = email.substring(0, at);
+        // Convert "clyde.donovan96787" → "Clyde Donovan"
+        String[] parts = local.split("[._\\d-]+");
+        StringBuilder name = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isBlank()) {
+                if (name.length() > 0) name.append(" ");
+                name.append(part.substring(0, 1).toUpperCase());
+                if (part.length() > 1) name.append(part.substring(1).toLowerCase());
+            }
+        }
+        return name.length() > 0 ? name.toString() : email;
     }
 }

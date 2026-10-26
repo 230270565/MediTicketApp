@@ -16,6 +16,7 @@ import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.clinicstaff.components.NotificationDetailsDialog;
 import za.ac.cput.ui.layout.LiveUpdater;
 import za.ac.cput.ui.layout.NotificationCard;
+import za.ac.cput.ui.layout.Paginator;
 import za.ac.cput.ui.layout.Refreshable;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 // Nurse notifications, newest first. Unread ones are highlighted and opening one marks it read.
 public class NotificationsPage extends JPanel implements Refreshable {
 
+    private final Paginator paginator = new Paginator("notifications", this::renderNotifications);
     private JPanel historyList;
     private String activeFilter = "ALL";
     private JPanel filterBarContainer;
@@ -63,20 +65,18 @@ public class NotificationsPage extends JPanel implements Refreshable {
         historyList.setLayout(new BoxLayout(historyList, BoxLayout.Y_AXIS));
         historyList.setOpaque(false);
 
-        JScrollPane scroll = new JScrollPane(historyList);
-        scroll.setBorder(null);
-        scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         content.add(title);
         content.add(subtitle);
         content.add(filterBarContainer);
         content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-        content.add(scroll);
+        content.add(historyList);
+        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        content.add(paginator);
 
-        add(content, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(content);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        add(scroll, BorderLayout.CENTER);
 
         loadNotifications();
     }
@@ -125,6 +125,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
         AppTheme.styleFilterButton(btn, key.equals(activeFilter));
         btn.addActionListener(e -> {
             activeFilter = key;
+            paginator.reset();
             rebuildFilterBar();
             renderNotifications();
         });
@@ -142,7 +143,12 @@ public class NotificationsPage extends JPanel implements Refreshable {
                 })
                 .collect(Collectors.toList());
 
-        if (filtered.isEmpty()) {
+        paginator.setTotal(filtered.size());
+        int _from = paginator.getOffset();
+        int _to   = Math.min(_from + paginator.getPageSize(), filtered.size());
+        List<Notification> page = filtered.isEmpty() ? filtered : filtered.subList(_from, _to);
+
+        if (page.isEmpty()) {
             JLabel empty = new JLabel("UNREAD".equals(activeFilter)
                     ? "You're all caught up. No unread notifications."
                     : "No notifications yet. Updates about your appointments will appear here.");
@@ -152,7 +158,7 @@ public class NotificationsPage extends JPanel implements Refreshable {
             empty.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_MD, 0, 0, 0));
             historyList.add(empty);
         } else {
-            for (Notification n : filtered) {
+            for (Notification n : page) {
                 historyList.add(new NotificationCard(n, null, () -> open(n)));
                 historyList.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
             }

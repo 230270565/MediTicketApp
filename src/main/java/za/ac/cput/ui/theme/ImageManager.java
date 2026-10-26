@@ -47,10 +47,14 @@ public class ImageManager {
     public static final String ICON_PATIENT      = "icons/patient.png";
     public static final String ICON_SECURITY     = "icons/security.png";
 
-    public static final String LOGO_ICON      = "logos/MediTicketIcon1.png";
-    public static final String LOGO_PRIMARY   = "logos/MediTicketLogo.png";
+    public static final String LOGO_ICON      = "logos/LogoWithoutText.png";
+    public static final String LOGO_PRIMARY   = "logos/Logo.png";
     public static final String LOGO_PRIMARY_2 = "logos/MediTicketLogo2.png";
     public static final String LOGO_WHITE     = "logos/MediTicketLogoW.png";
+
+    /** Legacy logo paths — kept so nothing breaks if still referenced elsewhere. */
+    public static final String LOGO_ICON_LEGACY    = "logos/MediTicketIcon1.png";
+    public static final String LOGO_PRIMARY_LEGACY = "logos/MediTicketLogo.png";
 
     public static final String PLACEHOLDER_AVATAR = "placeholders/Avatar.png";
 
@@ -116,6 +120,7 @@ public class ImageManager {
                 ICON_SHIELD, ICON_CALENDAR, ICON_CLOCK, ICON_DOCTOR,
                 ICON_HEARTBEAT, ICON_NOTIFICATION, ICON_PATIENT, ICON_SECURITY,
                 LOGO_ICON, LOGO_PRIMARY, LOGO_PRIMARY_2, LOGO_WHITE,
+                LOGO_ICON_LEGACY, LOGO_PRIMARY_LEGACY,
                 PLACEHOLDER_AVATAR
         };
         for (String path : all) {

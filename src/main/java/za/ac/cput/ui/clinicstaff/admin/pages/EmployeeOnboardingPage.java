@@ -17,6 +17,7 @@ import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.auth.EmployeeAccessRequest;
 import za.ac.cput.ui.clinicstaff.components.AccessRequestDetailsDialog;
 import za.ac.cput.ui.clinicstaff.components.InviteEmployeeDialog;
+import za.ac.cput.ui.layout.Paginator;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
@@ -31,6 +32,7 @@ public class EmployeeOnboardingPage extends JPanel implements Refreshable {
 
     private static final int ID_COLUMN = 4; // kept in the model for row lookups, hidden from view
 
+    private final Paginator paginator = new Paginator("requests", this::renderRequests);
     private DefaultTableModel tableModel;
     private JTable requestsTable;
     private List<EmployeeAccessRequest> currentRequests = List.of();
@@ -198,24 +200,33 @@ public class EmployeeOnboardingPage extends JPanel implements Refreshable {
         RowClickHelper.makeRowsClickable(requestsTable, ID_COLUMN, this::openDetails);
 
         JScrollPane tableScroll = new JScrollPane(requestsTable);
-        tableScroll.setPreferredSize(new Dimension(0, 260));
         tableScroll.setBorder(BorderFactory.createLineBorder(AppTheme.DIVIDER));
         tableScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         section.add(title);
         section.add(note);
         section.add(tableScroll);
+        section.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        section.add(paginator);
         return section;
     }
 
     private void loadPendingRequests() {
         BaseApiClient.ApiResult<List<EmployeeAccessRequest>> result =
                 ApiClientProvider.getInstance().auth().getAccessRequests("PENDING");
-
-        tableModel.setRowCount(0);
         currentRequests = result.isSuccess() ? result.getData() : List.of();
+        paginator.reset();
+        renderRequests();
+    }
 
-        for (EmployeeAccessRequest r : currentRequests) {
+    private void renderRequests() {
+        tableModel.setRowCount(0);
+        paginator.setTotal(currentRequests.size());
+        int _from = paginator.getOffset();
+        int _to   = Math.min(_from + paginator.getPageSize(), currentRequests.size());
+        List<EmployeeAccessRequest> page = currentRequests.subList(_from, _to);
+
+        for (EmployeeAccessRequest r : page) {
             String role = r.getRequestedStaffRole() != null ? r.getRequestedStaffRole() : "—";
             tableModel.addRow(new Object[]{
                     r.getEmail(), r.getRequestedUserType(), role,

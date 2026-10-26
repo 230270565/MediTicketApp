@@ -45,7 +45,9 @@ public final class Icons {
     public static final String X = "x";
     public static final String INFO = "info";
     public static final String ALERT = "alert";
-    public static final String PLUS = "plus";
+    public static final String PLUS          = "plus";
+    public static final String CHEVRON_LEFT  = "chevron_left";
+    public static final String CHEVRON_RIGHT = "chevron_right";
 
     private Icons() {}
 
@@ -185,7 +187,9 @@ public final class Icons {
             Map.entry(PLUS, g -> {
                 g.draw(new Line2D.Double(12, 5, 12, 19));
                 g.draw(new Line2D.Double(5, 12, 19, 12));
-            })
+            }),
+            Map.entry(CHEVRON_LEFT,  g -> g.draw(path(15, 5, 9, 12, 15, 19))),
+            Map.entry(CHEVRON_RIGHT, g -> g.draw(path(9, 5, 15, 12, 9, 19)))
     );
 
     private static Path2D path(double... xy) {

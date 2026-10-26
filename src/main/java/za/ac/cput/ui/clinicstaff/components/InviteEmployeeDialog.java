@@ -1,11 +1,11 @@
 /*
  InviteEmployeeDialog.java
 
- Dialog for invite employee
+ Invite employee dialog — Stitch design system
 
  Author: Matthew Barron (230398863)
 
- Date: 11th August 2026
+ Date: 26th October 2026
 */
 
 package za.ac.cput.ui.clinicstaff.components;
@@ -14,10 +14,10 @@ import za.ac.cput.api.ApiClientProvider;
 import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.auth.EmployeeInviteRequest;
 import za.ac.cput.ui.auth.components.LabeledTextField;
-import za.ac.cput.ui.auth.components.PrimaryButton;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
-import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,47 +25,46 @@ import java.awt.*;
 public class InviteEmployeeDialog {
 
     public static void show(Component parent, String userType, String staffRole, Runnable onSent) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "DOCTOR".equals(userType) ? "Invite Doctor" : "Invite Clinic Nurse",
-                Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(440, 280);
-        dialog.setLocationRelativeTo(parent);
+        boolean isDoctor = "DOCTOR".equals(userType);
+        String role = isDoctor ? "Doctor" : "Nurse";
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 460);
 
-        JLabel subtitle = new JLabel("<html>Enter the " + ("DOCTOR".equals(userType) ? "doctor's" : "nurse's")
-                + " email address. An invitation will be sent to this email.</html>");
-        subtitle.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        subtitle.setForeground(AppTheme.TEXT_SECONDARY);
-        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        subtitle.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
+        // ── Header ────────────────────────────────────────────────────────────
+        body.add(StitchDialog.header(dialog, Icons.MAIL, "Invite " + role,
+                "Send an invitation to join MediTicket"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(16));
 
+        // ── Info banner ───────────────────────────────────────────────────────
+        body.add(StitchDialog.infoBanner("An invitation code will be sent to this email address."));
+        body.add(Box.createVerticalStrut(14));
+
+        // ── Email field ───────────────────────────────────────────────────────
         LabeledTextField emailField = new LabeledTextField("Email");
         emailField.getField().putClientProperty("JTextField.placeholderText",
-                "DOCTOR".equals(userType) ? "doctor@example.com" : "nurse@example.com");
+                isDoctor ? "doctor@example.com" : "nurse@example.com");
         emailField.setAlignmentX(Component.LEFT_ALIGNMENT);
         emailField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 64));
+        body.add(emailField);
 
-        JLabel errorLabel = new JLabel(" ");
-        errorLabel.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-        errorLabel.setForeground(AppTheme.STATUS_DANGER);
-        errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // ── Error label ───────────────────────────────────────────────────────
+        JLabel errorLabel = StitchDialog.errorLabel();
+        body.add(errorLabel);
+        body.add(Box.createVerticalStrut(16));
 
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, AppTheme.SPACE_SM, 0));
-        buttonRow.setOpaque(false);
-        buttonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        buttonRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        // ── Footer ────────────────────────────────────────────────────────────
+        JPanel footer = StitchDialog.buttonRow();
 
         JButton cancel = new JButton("Cancel");
-        cancel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        cancel.setFocusPainted(false);
+        AppTheme.styleActionButton(cancel, false, null);
         cancel.addActionListener(e -> dialog.dispose());
+        footer.add(cancel);
 
-        PrimaryButton send = new PrimaryButton("Send Invitation");
-        send.setPreferredSize(new Dimension(160, 42));
+        JButton send = new JButton("Send Invitation");
+        AppTheme.styleActionButton(send, true, Icons.MAIL);
         send.addActionListener(e -> {
             String email = emailField.getText().trim();
             if (email.isEmpty() || !email.contains("@")) {
@@ -83,25 +82,17 @@ public class InviteEmployeeDialog {
             if (result.isSuccess()) {
                 dialog.dispose();
                 AppDialog.show(parent, "Invitation Sent",
-                        "An invitation has been sent to " + email + ".",
-                        AppDialog.Type.SUCCESS);
+                        "An invitation has been sent to " + email + ".", AppDialog.Type.SUCCESS);
                 if (onSent != null) onSent.run();
             } else {
                 errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Unable to send invitation.");
             }
         });
+        footer.add(send);
 
-        buttonRow.add(cancel);
-        buttonRow.add(send);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        content.add(subtitle);
-        content.add(emailField);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
-        content.add(errorLabel);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
-        content.add(buttonRow);
-
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        StitchDialog.packAndShow(dialog, parent, 460);
     }
 }

@@ -9,9 +9,12 @@
 */
 
 package za.ac.cput.ui.doctor.components;
+
 import za.ac.cput.model.domain.Appointment;
+import za.ac.cput.ui.layout.StatusPill;
 import za.ac.cput.ui.theme.AppTheme;
-import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,74 +22,65 @@ import java.awt.*;
 public class AppointmentDetailsDialog {
 
     public static void show(Component parent, Appointment appointment) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Appointment Details", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(440, 420);
-        dialog.setLocationRelativeTo(parent);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 480);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        body.add(StitchDialog.header(dialog, Icons.CALENDAR, "Appointment Details", "Your Schedule"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(18));
 
-        content.add(field("Patient", patientName(appointment)));
-        content.add(field("Patient Email", appointment.getPatient() != null ? appointment.getPatient().getEmail() : "\u2014"));
-        content.add(field("Patient Phone", appointment.getPatient() != null ? appointment.getPatient().getCellPhone() : "\u2014"));
-        content.add(field("Date", appointment.getAppointmentDate() != null ? appointment.getAppointmentDate().toString() : "\u2014"));
-        content.add(field("Time", appointment.getAppointmentTime() != null ? appointment.getAppointmentTime().toString() : "\u2014"));
+        // Extract patient name parts for avatar
+        String patientFirst = "";
+        String patientLast  = "";
+        if (appointment.getPatient() != null && appointment.getPatient().getName() != null) {
+            String f = appointment.getPatient().getName().getFirstName();
+            String l = appointment.getPatient().getName().getLastName();
+            patientFirst = f != null ? f : "";
+            patientLast  = l != null ? l : "";
+        }
+        String patientFullName = (patientFirst + " " + patientLast).trim();
+        if (patientFullName.isEmpty()) patientFullName = "—";
 
-        JLabel statusValue = new JLabel(appointment.getConfirmationStatus() != null ? appointment.getConfirmationStatus() : "\u2014");
-        statusValue.setFont(FontManager.bodyFont(Font.BOLD, 14));
-        statusValue.setForeground(AppTheme.statusColor(appointment.getConfirmationStatus()));
-        content.add(labeledRow("Status", statusValue));
+        // 2-column meta grid — 3 rows x 2 cols
+        JPanel grid = new JPanel(new GridLayout(3, 2, 24, 16));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-        content.add(field("Reason", appointment.getReason() != null && !appointment.getReason().isBlank()
-                ? appointment.getReason() : "\u2014"));
+        // Row 1: Patient | Status
+        grid.add(StitchDialog.metaCell("PATIENT", StitchDialog.personCell(
+                StitchDialog.initials(patientFirst, patientLast),
+                patientFullName, "Patient", AppTheme.TEXT_MUTED)));
+        grid.add(StitchDialog.metaCell("STATUS", new StatusPill(appointment.getConfirmationStatus())));
 
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_MD));
+        // Row 2: Date | Time
+        String dateStr = appointment.getAppointmentDate() != null
+                ? appointment.getAppointmentDate().toString() : "—";
+        String timeStr = appointment.getAppointmentTime() != null
+                ? appointment.getAppointmentTime().toString() : "—";
+        grid.add(StitchDialog.metaCell("DATE", StitchDialog.iconRow(Icons.CALENDAR, dateStr, null)));
+        grid.add(StitchDialog.metaCell("TIME", StitchDialog.iconRow(Icons.CLOCK, timeStr, null)));
 
+        // Row 3: Reason (spans conceptually; second cell left empty)
+        String reason = appointment.getReason();
+        if (reason != null && reason.length() > 60) reason = reason.substring(0, 60) + "…";
+        if (reason == null || reason.isBlank()) reason = "—";
+        grid.add(StitchDialog.metaCell("REASON", reason));
+        grid.add(new JPanel() {{ setOpaque(false); }});
+
+        body.add(grid);
+        body.add(Box.createVerticalStrut(20));
+
+        // Footer
+        JPanel footer = StitchDialog.buttonRow();
         JButton close = new JButton("Close");
-        close.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        close.setFocusPainted(false);
-        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        close.setAlignmentX(Component.LEFT_ALIGNMENT);
+        AppTheme.styleActionButton(close, false, null);
         close.addActionListener(e -> dialog.dispose());
-        content.add(close);
+        footer.add(close);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
-    }
-
-    private static String patientName(Appointment appt) {
-        if (appt.getPatient() == null || appt.getPatient().getName() == null) return "\u2014";
-        String first = appt.getPatient().getName().getFirstName();
-        String last = appt.getPatient().getName().getLastName();
-        return (first != null ? first : "") + " " + (last != null ? last : "");
-    }
-
-    private static JComponent field(String label, String value) {
-        JLabel valueLabel = new JLabel(value != null && !value.isBlank() ? value : "\u2014");
-        valueLabel.setFont(FontManager.bodyFont(Font.PLAIN, 14));
-        valueLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        return labeledRow(label, valueLabel);
-    }
-
-    private static JComponent labeledRow(String label, JComponent valueComponent) {
-        JPanel block = new JPanel();
-        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
-        block.setOpaque(false);
-        block.setAlignmentX(Component.LEFT_ALIGNMENT);
-        block.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
-
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(FontManager.bodyFont(Font.BOLD, 11));
-        labelComp.setForeground(AppTheme.TEXT_MUTED);
-        labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        valueComponent.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        block.add(labelComp);
-        block.add(valueComponent);
-        return block;
+        StitchDialog.packAndShow(dialog, parent, 480);
     }
 }

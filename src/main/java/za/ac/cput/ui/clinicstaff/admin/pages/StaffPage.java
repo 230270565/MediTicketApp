@@ -18,6 +18,7 @@ import za.ac.cput.model.domain.ClinicStaff;
 import za.ac.cput.model.domain.Doctor;
 import za.ac.cput.ui.clinicstaff.components.StaffDetailsDialog;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
+import za.ac.cput.ui.layout.Paginator;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
@@ -42,6 +43,7 @@ public class StaffPage extends JPanel implements Refreshable {
     private JTable staffTable;
     private JPanel filterBarContainer;
 
+    private final Paginator paginator = new Paginator("staff", this::renderTable);
     private List<StaffRow> allRows = new ArrayList<>();
     private String activeFilter = "ALL";
 
@@ -68,6 +70,8 @@ public class StaffPage extends JPanel implements Refreshable {
 
         content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
         content.add(buildTable());
+        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        content.add(paginator);
 
         JScrollPane scroll = new JScrollPane(content);
         scroll.setBorder(null);
@@ -138,6 +142,7 @@ public class StaffPage extends JPanel implements Refreshable {
             AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
+                paginator.reset();
                 renderTable();
                 filterBarContainer.removeAll();
                 filterBarContainer.add(buildFilterBar(), BorderLayout.WEST);
@@ -171,17 +176,15 @@ public class StaffPage extends JPanel implements Refreshable {
         RowClickHelper.makeRowsClickable(staffTable, 6, this::onRowClicked);
 
         JScrollPane scroll = new JScrollPane(staffTable);
-        scroll.setPreferredSize(new Dimension(0, 400));
         scroll.setBorder(BorderFactory.createLineBorder(AppTheme.DIVIDER));
         scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         return scroll;
     }
 
-    private void onRowClicked(int filteredIndex) {
-        List<StaffRow> filtered = currentFilteredRows();
-        if (filteredIndex < 0 || filteredIndex >= filtered.size()) return;
+    private void onRowClicked(int globalIndex) {
+        if (globalIndex < 0 || globalIndex >= allRows.size()) return;
 
-        StaffRow row = filtered.get(filteredIndex);
+        StaffRow row = allRows.get(globalIndex);
         if (row.isDoctor) {
             StaffDetailsDialog.showDoctor(this, (Doctor) row.source);
         } else {
@@ -241,9 +244,12 @@ public class StaffPage extends JPanel implements Refreshable {
         tableModel.setRowCount(0);
 
         List<StaffRow> filtered = currentFilteredRows();
+        paginator.setTotal(filtered.size());
+        int _from = paginator.getOffset();
+        int _to   = Math.min(_from + paginator.getPageSize(), filtered.size());
+        List<StaffRow> page = filtered.subList(_from, _to);
 
-        for (int i = 0; i < filtered.size(); i++) {
-            StaffRow row = filtered.get(i);
+        for (StaffRow row : page) {
             tableModel.addRow(new Object[]{
                     row.name != null && !row.name.isBlank() ? row.name : "—",
                     roleLabel(row.role),
@@ -251,7 +257,7 @@ public class StaffPage extends JPanel implements Refreshable {
                     row.phone != null ? row.phone : "—",
                     row.extra != null && !row.extra.isBlank() ? row.extra : "—",
                     row.status != null ? row.status : "—",
-                    i // hidden, row index used by onRowClicked
+                    allRows.indexOf(row) // global index into allRows for stable row lookup
             });
         }
     }

@@ -16,6 +16,7 @@ import za.ac.cput.api.BaseApiClient;
 import za.ac.cput.model.domain.Patient;
 import za.ac.cput.ui.clinicstaff.components.PatientDetailsDialog;
 import za.ac.cput.ui.clinicstaff.components.SummaryCard;
+import za.ac.cput.ui.layout.Paginator;
 import za.ac.cput.ui.layout.RowClickHelper;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
@@ -39,6 +40,7 @@ public class PatientsPage extends JPanel implements Refreshable {
     private JTextField searchField;
     private JButton clearInactiveButton;
 
+    private final Paginator paginator = new Paginator("patients", this::renderTable);
     private List<Patient> allPatients = List.of();
     private String activeFilter = "ALL";
     private String searchText = "";
@@ -76,6 +78,8 @@ public class PatientsPage extends JPanel implements Refreshable {
 
         content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
         content.add(buildTable());
+        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
+        content.add(paginator);
 
         JScrollPane scroll = new JScrollPane(content);
         scroll.setBorder(null);
@@ -144,6 +148,7 @@ public class PatientsPage extends JPanel implements Refreshable {
             AppTheme.styleFilterButton(btn, f[0].equals(activeFilter));
             btn.addActionListener(e -> {
                 activeFilter = f[0];
+                paginator.reset();
                 renderTable();
                 filterBarContainer.removeAll();
                 filterBarContainer.add(buildFilterBar(), BorderLayout.WEST);
@@ -186,6 +191,7 @@ public class PatientsPage extends JPanel implements Refreshable {
 
     private void onSearchChanged() {
         searchText = searchField.getText().trim().toLowerCase();
+        paginator.reset();
         renderTable();
     }
 
@@ -211,7 +217,6 @@ public class PatientsPage extends JPanel implements Refreshable {
         RowClickHelper.makeRowsClickable(patientsTable, 5, this::onRowClicked);
 
         JScrollPane scroll = new JScrollPane(patientsTable);
-        scroll.setPreferredSize(new Dimension(0, 400));
         scroll.setBorder(BorderFactory.createLineBorder(AppTheme.DIVIDER));
         scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         return scroll;
@@ -260,6 +265,10 @@ public class PatientsPage extends JPanel implements Refreshable {
     private void renderTable() {
         tableModel.setRowCount(0);
         List<Patient> filtered = currentFilteredRows();
+        paginator.setTotal(filtered.size());
+        int _from = paginator.getOffset();
+        int _to   = Math.min(_from + paginator.getPageSize(), filtered.size());
+        filtered  = filtered.subList(_from, _to);
 
         for (Patient p : filtered) {
             tableModel.addRow(new Object[]{

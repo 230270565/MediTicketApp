@@ -16,73 +16,62 @@ import za.ac.cput.model.domain.PatientTicket;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class CompleteConsultationDialog {
 
     public static void show(Component parent, PatientTicket ticket, Runnable onCompleted) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Complete Consultation", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(440, 340);
-        dialog.setLocationRelativeTo(parent);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 480);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        body.add(StitchDialog.header(dialog, Icons.CLIPBOARD, "Complete Consultation", "Resolve Ticket"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(16));
 
-        JLabel subtitle = new JLabel("<html>Record a brief diagnosis or consultation summary. "
-                + "This marks the ticket resolved and the appointment complete — "
-                + "the patient will then be billed by clinic staff.</html>");
-        subtitle.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        subtitle.setForeground(AppTheme.TEXT_SECONDARY);
-        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        subtitle.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
+        // Info banner describing what this action does
+        body.add(StitchDialog.infoBanner(
+                "<html>Record a diagnosis or summary. This marks the ticket resolved<br>"
+                + "and the patient will be billed by clinic staff.</html>"));
+        body.add(Box.createVerticalStrut(16));
 
-        JLabel notesLabel = new JLabel("Diagnosis / Summary");
-        notesLabel.setFont(FontManager.bodyFont(Font.BOLD, 12));
-        notesLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        notesLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        notesLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
+        // Field label
+        body.add(StitchDialog.fieldLabel("DIAGNOSIS / SUMMARY"));
 
-        JTextArea notesArea = new JTextArea(6, 20);
+        // Text area
+        JTextArea notesArea = new JTextArea(5, 20);
         notesArea.setFont(FontManager.bodyFont(Font.PLAIN, 13));
         notesArea.setLineWrap(true);
         notesArea.setWrapStyleWord(true);
-        notesArea.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(AppTheme.BORDER, 1, true),
-                BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
+
         JScrollPane notesScroll = new JScrollPane(notesArea);
         notesScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         notesScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
+        notesScroll.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(AppTheme.BORDER, 1, true),
+                new EmptyBorder(8, 10, 8, 10)));
+        body.add(notesScroll);
 
-        JLabel errorLabel = new JLabel(" ");
-        errorLabel.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-        errorLabel.setForeground(AppTheme.STATUS_DANGER);
-        errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        errorLabel.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, 0, 0));
+        // Error label
+        JLabel errorLabel = StitchDialog.errorLabel();
+        body.add(errorLabel);
+        body.add(Box.createVerticalStrut(8));
 
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, AppTheme.SPACE_SM, 0));
-        buttonRow.setOpaque(false);
-        buttonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        buttonRow.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_MD, 0, 0, 0));
+        // Footer
+        JPanel footer = StitchDialog.buttonRow();
 
         JButton cancel = new JButton("Cancel");
-        cancel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        cancel.setFocusPainted(false);
+        AppTheme.styleActionButton(cancel, false, null);
         cancel.addActionListener(e -> dialog.dispose());
+        footer.add(cancel);
 
         JButton submit = new JButton("Complete Consultation");
-        submit.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        submit.setForeground(AppTheme.TEXT_ON_PRIMARY);
-        submit.setBackground(AppTheme.PRIMARY);
-        submit.setFocusPainted(false);
-        submit.setBorderPainted(false);
-        submit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        submit.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        AppTheme.styleActionButton(submit, true, null);
         submit.addActionListener(e -> {
             String notes = notesArea.getText().trim();
             if (notes.isEmpty()) {
@@ -96,23 +85,19 @@ public class CompleteConsultationDialog {
             if (result.isSuccess()) {
                 dialog.dispose();
                 AppDialog.show(parent, "Consultation Completed",
-                        "The ticket has been resolved and the appointment marked complete.", AppDialog.Type.SUCCESS);
+                        "The ticket has been resolved and the appointment marked complete.",
+                        AppDialog.Type.SUCCESS);
                 if (onCompleted != null) onCompleted.run();
             } else {
-                errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Unable to complete consultation.");
+                errorLabel.setText(result.getMessage() != null
+                        ? result.getMessage() : "Unable to complete consultation.");
             }
         });
+        footer.add(submit);
 
-        buttonRow.add(cancel);
-        buttonRow.add(submit);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        content.add(subtitle);
-        content.add(notesLabel);
-        content.add(notesScroll);
-        content.add(errorLabel);
-        content.add(buttonRow);
-
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        StitchDialog.packAndShow(dialog, parent, 480);
     }
 }

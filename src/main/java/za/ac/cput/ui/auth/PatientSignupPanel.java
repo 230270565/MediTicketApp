@@ -98,8 +98,6 @@ public class PatientSignupPanel extends JPanel {
                 BorderFactory.createLineBorder(AppTheme.BORDER, 1, true),
                 BorderFactory.createEmptyBorder(AppTheme.SPACE_XL, AppTheme.SPACE_XL, AppTheme.SPACE_XL, AppTheme.SPACE_XL)
         ));
-        card.setPreferredSize(new Dimension(760, 720));
-
         JLabel title = new JLabel("Join Our Elite Network");
         title.setFont(FontManager.headlineFont(Font.BOLD, 30));
         title.setForeground(AppTheme.TEXT_PRIMARY);

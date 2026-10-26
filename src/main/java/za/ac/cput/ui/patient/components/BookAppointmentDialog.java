@@ -1,14 +1,15 @@
 /*
  BookAppointmentDialog.java
 
- Patient dialog for book appointment
+ Patient dialog to book a new appointment — Stitch design system
 
  Author: Joshua Reid Adams (230317693)
 
- Date: 12th August 2026
+ Date: 26th October 2026
 */
 
 package za.ac.cput.ui.patient.components;
+
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.components.TimePicker;
@@ -21,6 +22,8 @@ import za.ac.cput.session.SessionManager;
 import za.ac.cput.ui.theme.AppDialog;
 import za.ac.cput.ui.theme.AppTheme;
 import za.ac.cput.ui.theme.FontManager;
+import za.ac.cput.ui.theme.Icons;
+import za.ac.cput.ui.theme.StitchDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,93 +33,99 @@ import java.time.LocalTime;
 public class BookAppointmentDialog {
 
     public static void show(Component parent, Runnable onBooked) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
-                "Book New Appointment", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(460, 480);
-        dialog.setLocationRelativeTo(parent);
+        JDialog dialog = StitchDialog.create(parent);
+        StitchDialog.CardPanel card = StitchDialog.card();
+        JPanel body = StitchDialog.body(dialog, card, 480);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(AppTheme.SURFACE);
-        content.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_LG));
+        // ── Header ────────────────────────────────────────────────────────────
+        body.add(StitchDialog.header(dialog, Icons.CALENDAR, "Book New Appointment",
+                "Request a new appointment with the clinic"));
+        body.add(StitchDialog.divider());
+        body.add(Box.createVerticalStrut(18));
 
-        JLabel dateLabel = fieldLabel("Preferred Date");
+        // ── Preferred Date ────────────────────────────────────────────────────
+        body.add(styledFieldLabel("Preferred Date", true));
+        body.add(Box.createVerticalStrut(6));
 
         DatePickerSettings dateSettings = new DatePickerSettings();
         DatePicker datePicker = new DatePicker(dateSettings);
-        dateSettings.setDateRangeLimits(LocalDate.now(), null); // must come AFTER constructing the DatePicker
+        dateSettings.setDateRangeLimits(LocalDate.now(), null);
         datePicker.setAlignmentX(Component.LEFT_ALIGNMENT);
-        datePicker.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        datePicker.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        body.add(datePicker);
+        body.add(Box.createVerticalStrut(14));
 
-        JLabel timeLabel = fieldLabel("Preferred Time");
+        // ── Preferred Time ────────────────────────────────────────────────────
+        body.add(styledFieldLabel("Preferred Time", true));
+        body.add(Box.createVerticalStrut(6));
 
         TimePickerSettings timeSettings = new TimePickerSettings();
         TimePicker timePicker = new TimePicker(timeSettings);
         timePicker.setAlignmentX(Component.LEFT_ALIGNMENT);
-        timePicker.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        timePicker.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        body.add(timePicker);
+        body.add(Box.createVerticalStrut(14));
 
-        JLabel reasonLabel = fieldLabel("Reason for Visit");
+        // ── Reason for Visit ──────────────────────────────────────────────────
+        JPanel reasonHeader = new JPanel(new BorderLayout());
+        reasonHeader.setOpaque(false);
+        reasonHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+        reasonHeader.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        JLabel reasonLbl = styledFieldLabel("Reason for Visit", true);
+        reasonLbl.setBorder(null);
+        JLabel maxChars = new JLabel("Max 500 characters");
+        maxChars.setFont(FontManager.bodyFont(Font.PLAIN, 11));
+        maxChars.setForeground(AppTheme.TEXT_MUTED);
+        reasonHeader.add(reasonLbl, BorderLayout.WEST);
+        reasonHeader.add(maxChars, BorderLayout.EAST);
+        body.add(reasonHeader);
+        body.add(Box.createVerticalStrut(6));
 
-        JTextArea reasonArea = new JTextArea(4, 20);
+        JTextArea reasonArea = new JTextArea(5, 20);
         reasonArea.setFont(FontManager.bodyFont(Font.PLAIN, 13));
+        reasonArea.setForeground(AppTheme.TEXT_PRIMARY);
         reasonArea.setLineWrap(true);
         reasonArea.setWrapStyleWord(true);
-        reasonArea.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(AppTheme.BORDER, 1, true),
-                BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
+        reasonArea.setBackground(AppTheme.SURFACE_ALT);
+        reasonArea.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        reasonArea.putClientProperty("caretColor", AppTheme.PRIMARY);
+
         JScrollPane reasonScroll = new JScrollPane(reasonArea);
+        reasonScroll.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER, 1, true));
         reasonScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-        reasonScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        reasonScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        body.add(reasonScroll);
+        body.add(Box.createVerticalStrut(14));
 
-        JLabel infoNote = new JLabel("<html><i>A nurse or admin will review your request "
-                + "and confirm a doctor and appointment time shortly.</i></html>");
-        infoNote.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-        infoNote.setForeground(AppTheme.TEXT_MUTED);
-        infoNote.setAlignmentX(Component.LEFT_ALIGNMENT);
-        infoNote.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, 0, 0));
+        // ── Info note ─────────────────────────────────────────────────────────
+        body.add(StitchDialog.infoBanner(
+                "A nurse or admin will review your request and confirm a doctor and appointment time shortly."));
+        body.add(Box.createVerticalStrut(10));
 
-        JLabel errorLabel = new JLabel(" ");
-        errorLabel.setFont(FontManager.bodyFont(Font.PLAIN, 12));
-        errorLabel.setForeground(AppTheme.STATUS_DANGER);
-        errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        errorLabel.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, 0, 0));
+        // ── Error label ───────────────────────────────────────────────────────
+        JLabel errorLabel = StitchDialog.errorLabel();
+        body.add(errorLabel);
+        body.add(Box.createVerticalStrut(16));
 
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, AppTheme.SPACE_SM, 0));
-        buttonRow.setOpaque(false);
-        buttonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        buttonRow.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_MD, 0, 0, 0));
+        // ── Footer ────────────────────────────────────────────────────────────
+        JPanel footer = StitchDialog.buttonRow();
 
         JButton cancel = new JButton("Cancel");
-        cancel.setFont(FontManager.bodyFont(Font.PLAIN, 13));
-        cancel.setFocusPainted(false);
+        AppTheme.styleActionButton(cancel, false, null);
         cancel.addActionListener(e -> dialog.dispose());
+        footer.add(cancel);
 
         JButton submit = new JButton("Request Appointment");
-        submit.setFont(FontManager.bodyFont(Font.BOLD, 13));
-        submit.setForeground(AppTheme.TEXT_ON_PRIMARY);
-        submit.setBackground(AppTheme.PRIMARY);
-        submit.setFocusPainted(false);
-        submit.setBorderPainted(false);
-        submit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        submit.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        AppTheme.styleActionButton(submit, true, Icons.CHECK);
         submit.addActionListener(e -> {
             LocalDate date = datePicker.getDate();
             LocalTime time = timePicker.getTime();
             String reason = reasonArea.getText().trim();
 
-            if (date == null) {
-                errorLabel.setText("Please select a date.");
-                return;
-            }
-            if (time == null) {
-                errorLabel.setText("Please select a time.");
-                return;
-            }
-            if (reason.isEmpty()) {
-                errorLabel.setText("Please enter a reason for your visit.");
-                return;
-            }
+            if (date == null) { errorLabel.setText("Please select a date."); return; }
+            if (time == null) { errorLabel.setText("Please select a time."); return; }
+            if (reason.isEmpty()) { errorLabel.setText("Please enter a reason for your visit."); return; }
+            if (reason.length() > 500) { errorLabel.setText("Reason may not exceed 500 characters."); return; }
             errorLabel.setText(" ");
 
             Appointment appointment = new Appointment();
@@ -141,32 +150,20 @@ public class BookAppointmentDialog {
                 errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Unable to submit request.");
             }
         });
+        footer.add(submit);
 
-        buttonRow.add(cancel);
-        buttonRow.add(submit);
+        body.add(footer);
+        body.add(Box.createVerticalStrut(24));
 
-        content.add(dateLabel);
-        content.add(datePicker);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
-        content.add(timeLabel);
-        content.add(timePicker);
-        content.add(Box.createVerticalStrut(AppTheme.SPACE_SM));
-        content.add(reasonLabel);
-        content.add(reasonScroll);
-        content.add(infoNote);
-        content.add(errorLabel);
-        content.add(buttonRow);
-
-        dialog.setContentPane(content);
-        dialog.setVisible(true);
+        StitchDialog.packAndShow(dialog, parent, 480);
     }
 
-    private static JLabel fieldLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(FontManager.bodyFont(Font.BOLD, 12));
+    private static JLabel styledFieldLabel(String text, boolean required) {
+        JLabel label = new JLabel(required ? text + " *" : text);
+        label.setFont(FontManager.bodyFont(Font.BOLD, 13));
         label.setForeground(AppTheme.TEXT_PRIMARY);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
-        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         return label;
     }
 }

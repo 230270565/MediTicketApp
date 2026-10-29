@@ -26,6 +26,7 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.concurrent.ExecutionException;
 
 public class ClinicStaffSignupPanel extends JPanel {
 
@@ -80,13 +81,12 @@ public class ClinicStaffSignupPanel extends JPanel {
         JPanel infoBanner = new JPanel();
         infoBanner.setLayout(new BoxLayout(infoBanner, BoxLayout.Y_AXIS));
         infoBanner.setBackground(AppTheme.PRIMARY_LIGHT);
-        infoBanner.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, AppTheme.SPACE_MD, AppTheme.SPACE_SM, AppTheme.SPACE_MD));
+        infoBanner.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, AppTheme.SPACE_MD, AppTheme.SPACE_LG, AppTheme.SPACE_MD));
         infoBanner.setAlignmentX(Component.LEFT_ALIGNMENT);
         infoBanner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
         emailValueLabel = new JLabel("—");
         roleValueLabel = new JLabel("—");
-        JLabel infoText = new JLabel("<html>Signing up as <b>" + "</b> — role pre-verified by invitation code.</html>");
 
         JPanel infoRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         infoRow.setOpaque(false);
@@ -105,10 +105,6 @@ public class ClinicStaffSignupPanel extends JPanel {
         infoRow.add(forEmail);
         infoRow.add(emailValueLabel);
         infoBanner.add(infoRow);
-        infoBanner.setBorder(BorderFactory.createCompoundBorder(
-                infoBanner.getBorder(),
-                BorderFactory.createEmptyBorder(AppTheme.SPACE_SM, 0, AppTheme.SPACE_LG, 0)
-        ));
 
         firstName = fieldOf("First Name", "e.g. Julian");
         middleName = fieldOf("Middle Name (optional)", "e.g. Alistair");
@@ -176,7 +172,8 @@ public class ClinicStaffSignupPanel extends JPanel {
         String pwd = new String(password.getPassword());
         String confirmPwd = new String(confirmPassword.getPassword());
 
-        if (firstName.getText().isBlank() || lastName.getText().isBlank() || pwd.isBlank()) {
+        if (firstName.getText().isBlank() || lastName.getText().isBlank()
+                || cellPhone.getText().isBlank() || pwd.isBlank()) {
             errorLabel.setText("Please fill in all required fields.");
             return;
         }
@@ -205,14 +202,29 @@ public class ClinicStaffSignupPanel extends JPanel {
         request.setDob(parsedDob);
         request.setDepartment(department.getSelected());
 
-        BaseApiClient.ApiResult<String> result = ApiClientProvider.getInstance().auth().signupClinicStaff(request);
+        new SwingWorker<BaseApiClient.ApiResult<String>, Void>() {
+            @Override
+            protected BaseApiClient.ApiResult<String> doInBackground() {
+                return ApiClientProvider.getInstance().auth().signupClinicStaff(request);
+            }
 
-        if (result.isSuccess()) {
-            clearForm();
-            appFrame.showScreen(AppFrame.SCREEN_EMPLOYEE_SIGNUP_SUCCESS);
-        } else {
-            errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Signup failed.");
-        }
+            @Override
+            protected void done() {
+                BaseApiClient.ApiResult<String> result;
+                try {
+                    result = get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    errorLabel.setText("Something went wrong. Please try again.");
+                    return;
+                }
+                if (result.isSuccess()) {
+                    clearForm();
+                    appFrame.showScreen(AppFrame.SCREEN_EMPLOYEE_SIGNUP_SUCCESS);
+                } else {
+                    errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Signup failed.");
+                }
+            }
+        }.execute();
     }
 
     private void clearForm() {

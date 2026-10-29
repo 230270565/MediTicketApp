@@ -88,7 +88,7 @@ public class EmployeeAccessRequestPanel extends JPanel {
         errorLabel.setForeground(AppTheme.STATUS_DANGER);
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        PrimaryButton sendButton = new PrimaryButton("Send Invitation");
+        PrimaryButton sendButton = new PrimaryButton("Submit Request");
         sendButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         sendButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
         sendButton.addActionListener(e -> onSendRequest());

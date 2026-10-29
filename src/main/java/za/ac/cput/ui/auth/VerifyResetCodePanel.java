@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.ExecutionException;
 
 public class VerifyResetCodePanel extends JPanel {
 
@@ -124,21 +125,40 @@ public class VerifyResetCodePanel extends JPanel {
     private void onVerify() {
         String code = codeField.getText().trim();
         if (code.isEmpty()) {
+            errorLabel.setForeground(AppTheme.STATUS_DANGER);
             errorLabel.setText("Please enter the code.");
             return;
         }
+        errorLabel.setForeground(AppTheme.STATUS_DANGER);
         errorLabel.setText(" ");
 
-        BaseApiClient.ApiResult<String> result = ApiClientProvider.getInstance()
-                .auth().verifyResetCode(new VerifyResetCodeRequest(email, code));
+        new SwingWorker<BaseApiClient.ApiResult<String>, Void>() {
+            @Override
+            protected BaseApiClient.ApiResult<String> doInBackground() {
+                return ApiClientProvider.getInstance()
+                        .auth().verifyResetCode(new VerifyResetCodeRequest(email, code));
+            }
 
-        if (result.isSuccess()) {
-            String sessionToken = result.getData();
-            appFrame.getNewPasswordPanel().setResetContext(email, sessionToken);
-            appFrame.showScreen(AppFrame.SCREEN_NEW_PASSWORD);
-        } else {
-            errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Invalid or expired code.");
-        }
+            @Override
+            protected void done() {
+                BaseApiClient.ApiResult<String> result;
+                try {
+                    result = get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    errorLabel.setForeground(AppTheme.STATUS_DANGER);
+                    errorLabel.setText("Something went wrong. Please try again.");
+                    return;
+                }
+                if (result.isSuccess()) {
+                    String sessionToken = result.getData();
+                    appFrame.getNewPasswordPanel().setResetContext(email, sessionToken);
+                    appFrame.showScreen(AppFrame.SCREEN_NEW_PASSWORD);
+                } else {
+                    errorLabel.setForeground(AppTheme.STATUS_DANGER);
+                    errorLabel.setText(result.getMessage() != null ? result.getMessage() : "Invalid or expired code.");
+                }
+            }
+        }.execute();
     }
 
     private void onResend() {
@@ -146,20 +166,30 @@ public class VerifyResetCodePanel extends JPanel {
             appFrame.showScreen(AppFrame.SCREEN_FORGOT_PASSWORD);
             return;
         }
-        BaseApiClient.ApiResult<String> result =
-                ApiClientProvider.getInstance().auth().forgotPassword(new ForgotPasswordRequest(email));
+        new SwingWorker<BaseApiClient.ApiResult<String>, Void>() {
+            @Override
+            protected BaseApiClient.ApiResult<String> doInBackground() {
+                return ApiClientProvider.getInstance().auth().forgotPassword(new ForgotPasswordRequest(email));
+            }
 
-        if (result.isSuccess()) {
-            errorLabel.setForeground(AppTheme.STATUS_SUCCESS);
-            errorLabel.setText("A new code has been sent.");
-        } else {
-            errorLabel.setForeground(AppTheme.STATUS_DANGER);
-            errorLabel.setText("Something went wrong. Please try again.");
-        }
-    }
-
-    // AppFrame has no getter for NewPasswordPanel, so we look for it here.
-    private Component findNewPasswordPanel() {
-        return appFrame.getNewPasswordPanel();
+            @Override
+            protected void done() {
+                BaseApiClient.ApiResult<String> result;
+                try {
+                    result = get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    errorLabel.setForeground(AppTheme.STATUS_DANGER);
+                    errorLabel.setText("Something went wrong. Please try again.");
+                    return;
+                }
+                if (result.isSuccess()) {
+                    errorLabel.setForeground(AppTheme.STATUS_SUCCESS);
+                    errorLabel.setText("A new code has been sent.");
+                } else {
+                    errorLabel.setForeground(AppTheme.STATUS_DANGER);
+                    errorLabel.setText("Something went wrong. Please try again.");
+                }
+            }
+        }.execute();
     }
 }

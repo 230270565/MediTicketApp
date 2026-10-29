@@ -22,12 +22,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.ExecutionException;
 
 public class ForgotPasswordPanel extends JPanel {
 
     private final AppFrame appFrame;
     private LabeledTextField emailField;
     private JLabel errorLabel;
+    private PrimaryButton sendButton;
 
     public ForgotPasswordPanel(AppFrame appFrame) {
         this.appFrame = appFrame;
@@ -115,7 +117,7 @@ public class ForgotPasswordPanel extends JPanel {
         errorLabel.setForeground(AppTheme.STATUS_DANGER);
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        PrimaryButton sendButton = new PrimaryButton("Send Reset Code  →");
+        sendButton = new PrimaryButton("Send Reset Code  →");
         sendButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         sendButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
         sendButton.addActionListener(e -> onSendCode());
@@ -132,7 +134,7 @@ public class ForgotPasswordPanel extends JPanel {
         });
 
         JLabel footer = new JLabel("<html><div style='text-align:center;width:320px;color:#999;font-size:10px;'>"
-                + "This link expires in 15 minutes. If you did not request a reset, you can safely ignore this.</div></html>");
+                + "This code expires in 10 minutes. If you did not request a reset, you can safely ignore this.</div></html>");
         footer.setFont(FontManager.bodyFont(Font.PLAIN, 10));
         footer.setForeground(AppTheme.TEXT_MUTED);
         footer.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -159,17 +161,34 @@ public class ForgotPasswordPanel extends JPanel {
             return;
         }
         errorLabel.setText(" ");
+        sendButton.setEnabled(false);
+        sendButton.setText("Sending...");
 
-        BaseApiClient.ApiResult<String> result =
-                ApiClientProvider.getInstance().auth().forgotPassword(new ForgotPasswordRequest(email));
+        new SwingWorker<BaseApiClient.ApiResult<String>, Void>() {
+            @Override
+            protected BaseApiClient.ApiResult<String> doInBackground() {
+                return ApiClientProvider.getInstance().auth().forgotPassword(new ForgotPasswordRequest(email));
+            }
 
-        if (result.isSuccess()) {
-            appFrame.getVerifyResetCodePanel().setEmail(email);
-            emailField.getField().setText("");
-            appFrame.showScreen(AppFrame.SCREEN_VERIFY_RESET_CODE);
-        } else {
-
-            errorLabel.setText("Something went wrong. Please try again.");
-        }
+            @Override
+            protected void done() {
+                sendButton.setEnabled(true);
+                sendButton.setText("Send Reset Code  →");
+                BaseApiClient.ApiResult<String> result;
+                try {
+                    result = get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    errorLabel.setText("Something went wrong. Please try again.");
+                    return;
+                }
+                if (result.isSuccess()) {
+                    appFrame.getVerifyResetCodePanel().setEmail(email);
+                    emailField.getField().setText("");
+                    appFrame.showScreen(AppFrame.SCREEN_VERIFY_RESET_CODE);
+                } else {
+                    errorLabel.setText("Something went wrong. Please try again.");
+                }
+            }
+        }.execute();
     }
 }

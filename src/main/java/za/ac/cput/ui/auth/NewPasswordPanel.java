@@ -20,6 +20,7 @@ import za.ac.cput.ui.theme.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.ExecutionException;
 
 public class NewPasswordPanel extends JPanel {
 
@@ -30,6 +31,7 @@ public class NewPasswordPanel extends JPanel {
     private ToggleablePasswordField newPasswordField;
     private ToggleablePasswordField confirmPasswordField;
     private JLabel errorLabel;
+    private PrimaryButton resetButton;
 
     public NewPasswordPanel(AppFrame appFrame) {
         this.appFrame = appFrame;
@@ -80,7 +82,7 @@ public class NewPasswordPanel extends JPanel {
         errorLabel.setForeground(AppTheme.STATUS_DANGER);
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        PrimaryButton resetButton = new PrimaryButton("Reset Password");
+        resetButton = new PrimaryButton("Reset Password");
         resetButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         resetButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
         resetButton.addActionListener(e -> onReset());
@@ -120,19 +122,38 @@ public class NewPasswordPanel extends JPanel {
             return;
         }
         errorLabel.setText(" ");
+        resetButton.setEnabled(false);
+        resetButton.setText("Resetting...");
 
-        BaseApiClient.ApiResult<String> result = ApiClientProvider.getInstance()
-                .auth().resetPassword(new ResetPasswordRequest(email, resetSessionToken, newPass));
+        new SwingWorker<BaseApiClient.ApiResult<String>, Void>() {
+            @Override
+            protected BaseApiClient.ApiResult<String> doInBackground() {
+                return ApiClientProvider.getInstance()
+                        .auth().resetPassword(new ResetPasswordRequest(email, resetSessionToken, newPass));
+            }
 
-        if (result.isSuccess()) {
-            newPasswordField.clear();
-            confirmPasswordField.clear();
-            AppDialog.show(this, "Password Reset",
-                    "Your password has been reset successfully. You can now log in.", AppDialog.Type.SUCCESS);
-            appFrame.showScreen(AppFrame.SCREEN_LOGIN);
-        } else {
-            errorLabel.setText(result.getMessage() != null ? result.getMessage()
-                    : "Unable to reset password. Please request a new code.");
-        }
+            @Override
+            protected void done() {
+                resetButton.setEnabled(true);
+                resetButton.setText("Reset Password");
+                BaseApiClient.ApiResult<String> result;
+                try {
+                    result = get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    errorLabel.setText("Something went wrong. Please try again.");
+                    return;
+                }
+                if (result.isSuccess()) {
+                    newPasswordField.clear();
+                    confirmPasswordField.clear();
+                    AppDialog.show(NewPasswordPanel.this, "Password Reset",
+                            "Your password has been reset successfully. You can now log in.", AppDialog.Type.SUCCESS);
+                    appFrame.showScreen(AppFrame.SCREEN_LOGIN);
+                } else {
+                    errorLabel.setText(result.getMessage() != null ? result.getMessage()
+                            : "Unable to reset password. Please request a new code.");
+                }
+            }
+        }.execute();
     }
 }

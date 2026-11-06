@@ -68,6 +68,7 @@ public class DashboardPage extends JPanel implements Refreshable {
 
         JScrollPane scrollPane = new JScrollPane(buildContent());
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getViewport().setBackground(AppTheme.BACKGROUND);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
@@ -135,7 +136,8 @@ public class DashboardPage extends JPanel implements Refreshable {
     // -- Layout ----------------------------------------------------------
 
     private JComponent buildContent() {
-        JPanel root = new JPanel();
+        // Fits the window: the page only scrolls when the window is shorter than MIN_FIT_HEIGHT
+        JPanel root = new FitPanel(MIN_FIT_HEIGHT);
         root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
         root.setBackground(AppTheme.BACKGROUND);
         root.setBorder(BorderFactory.createEmptyBorder(AppTheme.SPACE_LG, AppTheme.SPACE_LG, AppTheme.SPACE_XL, AppTheme.SPACE_LG));
@@ -187,7 +189,10 @@ public class DashboardPage extends JPanel implements Refreshable {
         grid.add(buildRecentActivityTile(), bentoConstraints(3, 1, 1, 1, gap));
 
         // Row 2, col 3: Staff Overview
-        grid.add(buildStaffOverviewTile(), bentoConstraints(3, 2, 1, 1, gap));
+        // weighty 0 keeps it at its natural height so the activity tile above gets the spare space
+        GridBagConstraints lower = bentoConstraints(3, 2, 1, 1, gap);
+        lower.weighty = 0;
+        grid.add(buildStaffOverviewTile(), lower);
 
         // Row 3: Manage Staff shortcut, full width
         GridBagConstraints manage = bentoConstraints(0, 3, 4, 1, gap);
@@ -272,7 +277,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
         card.add(title, BorderLayout.NORTH);
 
-        activityList = new JPanel();
+        activityList = new FitPanel(Integer.MAX_VALUE);
         activityList.setLayout(new BoxLayout(activityList, BoxLayout.Y_AXIS));
         activityList.setOpaque(false);
 
@@ -283,6 +288,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         activityList.add(activityEmptyLabel);
 
         JScrollPane scroll = new JScrollPane(activityList);
+        fitInCard(scroll);
         scroll.setBorder(null);
         scroll.getViewport().setOpaque(false);
         scroll.setOpaque(false);
@@ -306,7 +312,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_MD, 0));
         card.add(title, BorderLayout.NORTH);
 
-        invitationList = new JPanel();
+        invitationList = new FitPanel(Integer.MAX_VALUE);
         invitationList.setLayout(new BoxLayout(invitationList, BoxLayout.Y_AXIS));
         invitationList.setOpaque(false);
 
@@ -317,6 +323,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         invitationList.add(invitationEmptyLabel);
 
         JScrollPane scroll = new JScrollPane(invitationList);
+        fitInCard(scroll);
         scroll.setBorder(null);
         scroll.getViewport().setOpaque(false);
         scroll.setOpaque(false);
@@ -340,7 +347,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, AppTheme.SPACE_SM, 0));
         card.add(title, BorderLayout.NORTH);
 
-        recentActivityList = new JPanel();
+        recentActivityList = new FitPanel(Integer.MAX_VALUE);
         recentActivityList.setLayout(new BoxLayout(recentActivityList, BoxLayout.Y_AXIS));
         recentActivityList.setOpaque(false);
 
@@ -351,6 +358,7 @@ public class DashboardPage extends JPanel implements Refreshable {
         recentActivityList.add(recentActivityEmptyLabel);
 
         JScrollPane scroll = new JScrollPane(recentActivityList);
+        fitInCard(scroll);
         scroll.setBorder(null);
         scroll.getViewport().setOpaque(false);
         scroll.setOpaque(false);
@@ -678,7 +686,8 @@ public class DashboardPage extends JPanel implements Refreshable {
         item.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         String text = n.getNotificationMessage() != null ? n.getNotificationMessage() : "Notification";
-        JLabel message = new JLabel("<html>" + text.replace("&", "&amp;").replace("<", "&lt;") + "</html>");
+        JLabel message = new JLabel(text);
+        message.setToolTipText(text);
         message.setFont(FontManager.bodyFont(n.isUnread() ? Font.BOLD : Font.PLAIN, 12));
         message.setForeground(AppTheme.TEXT_PRIMARY);
         message.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -723,5 +732,31 @@ public class DashboardPage extends JPanel implements Refreshable {
         if (hour < 12) return "Morning";
         if (hour < 17) return "Afternoon";
         return "Evening";
+    }
+
+    private static final int MIN_FIT_HEIGHT = 600;
+
+    // Small preferred size so long lists scroll inside their card instead of stretching the page
+    private static void fitInCard(JScrollPane scroll) {
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setPreferredSize(new Dimension(120, 100));
+    }
+
+    // Panel that follows the viewport width, and its height too while the viewport is at least minFitHeight tall
+    private static class FitPanel extends JPanel implements Scrollable {
+        private final int minFitHeight;
+
+        FitPanel(int minFitHeight) {
+            this.minFitHeight = minFitHeight;
+        }
+
+        @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
+        @Override public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 16; }
+        @Override public int getScrollableBlockIncrement(Rectangle r, int o, int d) { return 64; }
+        @Override public boolean getScrollableTracksViewportWidth() { return true; }
+
+        @Override public boolean getScrollableTracksViewportHeight() {
+            return getParent() instanceof JViewport v && v.getHeight() >= minFitHeight;
+        }
     }
 }
